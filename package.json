@@ -4,6 +4,7 @@
   "workspaces": ["client", "server"],
   "scripts": {
     "dev:server": "bun run --cwd server dev",
-    "dev:client": "bun run --cwd client dev"
+    "dev:client": "bun run --cwd client dev",
+    "db:studio": "bun run --cwd server studio"
   }
 }
