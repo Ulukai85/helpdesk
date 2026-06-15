@@ -123,6 +123,8 @@ Config: `playwright.config.ts` — tests in `./e2e/`, base URL `http://localhost
 - **Global teardown** (`e2e/global-teardown.ts`): resets the test DB again after the suite
 - Always pass the `.env.test` file when running tests: `bun --env-file=server/.env.test playwright test` (handled by `bun run test`)
 
+**Always run `bun run test` after implementing a new feature** to catch regressions before reporting the work as done.
+
 ### Writing E2E Tests — use the `e2e-tester` agent
 
 For End2End-Testing use the **`e2e-tester`** agent rather than writing tests inline. The agent has full access to the codebase and Playwright docs.
@@ -144,3 +146,7 @@ UI components come from **shadcn/ui** (Tailwind v4, `base-nova` style, neutral b
 - Utilities in `client/src/lib/utils.ts` (`cn()` helper)
 - Path alias `@/*` maps to `client/src/*` (configured in `vite.config.ts` and `tsconfig.app.json`)
 - shadcn `form` component is **not available** in the `base-nova` style — use `react-hook-form`'s `register` API directly with shadcn `Input`, `Label`, `Button`, and `Card`
+
+**Always prefer shadcn/ui components over custom HTML + Tailwind classes.** If a shadcn component fits the use case (Badge, Table, Dialog, etc.) but isn't installed yet, install it with `bunx shadcn@latest add <component>` — never reach for a raw `<span>` or `<table>` when a shadcn equivalent exists.
+
+Currently installed shadcn components: `button`, `card`, `input`, `label`, `table`, `badge`.
