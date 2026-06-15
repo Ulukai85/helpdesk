@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { z } from 'zod';
 import { authClient } from '../lib/auth-client';
@@ -17,6 +18,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
   const {
     register,
     handleSubmit,
@@ -24,11 +26,13 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
+  useEffect(() => {
+    if (session) navigate('/');
+  }, [session, navigate]);
+
   const onSubmit = async (data: FormData) => {
-    await authClient.signIn.email(data, {
-      onSuccess: () => navigate('/'),
-      onError: (ctx) => setError('root', { message: ctx.error.message }),
-    });
+    const { error } = await authClient.signIn.email(data);
+    if (error) setError('root', { message: error.message });
   };
 
   return (
