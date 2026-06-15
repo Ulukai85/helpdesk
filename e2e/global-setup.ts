@@ -8,4 +8,9 @@ export default async function globalSetup() {
     stdio: "inherit",
     env: process.env,
   });
+  execSync("bun prisma/seed.ts", {
+    cwd: serverDir,
+    stdio: "inherit",
+    env: process.env,
+  });
 }
