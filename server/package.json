@@ -5,7 +5,11 @@
     "dev": "bun --watch src/index.ts",
     "build": "tsc --noEmit",
     "start": "bun src/index.ts",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "seed": "bun prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "bun prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
