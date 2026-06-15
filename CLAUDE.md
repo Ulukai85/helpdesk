@@ -129,13 +129,30 @@ Config: `playwright.config.ts` — tests in `./e2e/`, base URL `http://localhost
 
 For End2End-Testing use the **`e2e-tester`** agent rather than writing tests inline. The agent has full access to the codebase and Playwright docs.
 
-**When to invoke:** Invoke when asked to test a feature.
-
 **How to invoke:** use the Agent tool with `subagent_type: "e2e-tester"`. Brief it with:
 
 - What feature/flow was just implemented
 - Relevant file paths (page components, API routes, route guards)
 - Any special setup needed (auth state, seeded data, roles)
+
+## Data Fetching (Client)
+
+Use **axios** for HTTP requests and **TanStack Query** (`@tanstack/react-query`) for all server-state management — never use raw `fetch` or manual `useEffect`/`useState` for API calls.
+
+- `QueryClient` and `QueryClientProvider` are set up in `client/src/main.tsx`
+- Use `useQuery` for reads: `queryKey` should identify the resource (e.g. `["users"]`), `queryFn` returns the axios promise
+- Pass `withCredentials: true` on authenticated endpoints (equivalent to `credentials: "include"`)
+- Error messages come from `error.message` (axios throws on non-2xx automatically)
+
+```tsx
+const { data, isPending, error } = useQuery({
+  queryKey: ['users'],
+  queryFn: () =>
+    axios
+      .get<{ users: User[] }>('/api/users', { withCredentials: true })
+      .then((res) => res.data.users),
+});
+```
 
 ## Styling
 

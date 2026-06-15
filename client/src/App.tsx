@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { Outlet, Routes, Route, Navigate, useNavigate, Link } from "react-router";
 import { authClient } from "./lib/auth-client";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -51,23 +52,19 @@ function AuthenticatedLayout() {
 }
 
 function HomePage() {
-  const [status, setStatus] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/health")
-      .then((res) => res.json())
-      .then((data) => setStatus(data.status))
-      .catch(() => setStatus("error"));
-  }, []);
+  const { data, isPending } = useQuery({
+    queryKey: ["health"],
+    queryFn: () => axios.get("/api/health").then((res) => res.data),
+  });
 
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Helpdesk</h1>
       <p>
         API status:{" "}
-        {status === null
+        {isPending
           ? "checking..."
-          : status === "ok"
+          : data?.status === "ok"
             ? "✓ ok"
             : "✗ unreachable"}
       </p>

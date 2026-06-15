@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import {
   Table,
   TableBody,
@@ -18,26 +19,23 @@ type User = {
 };
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/users", { credentials: "include" })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load users");
-        return res.json();
-      })
-      .then((data) => setUsers(data.users))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+  const {
+    data,
+    isPending: loading,
+    error,
+  } = useQuery({
+    queryKey: ["users"],
+    queryFn: () =>
+      axios
+        .get<{ users: User[] }>("/api/users", { withCredentials: true })
+        .then((res) => res.data.users),
+  });
 
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-6">Users</h1>
       {loading && <p className="text-muted-foreground">Loading…</p>}
-      {error && <p className="text-destructive">{error}</p>}
+      {error && <p className="text-destructive">{error.message}</p>}
       {!loading && !error && (
         <div className="rounded-md border">
           <Table>
@@ -50,7 +48,7 @@ export default function UsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.length === 0 ? (
+              {(data ?? []).length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={4}
@@ -60,7 +58,7 @@ export default function UsersPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((user) => (
+                (data ?? []).map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
