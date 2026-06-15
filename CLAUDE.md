@@ -29,6 +29,10 @@ bun run db:migrate:test     # reset test database (prisma migrate reset --force)
 # Seed (run from server/ or via workspace)
 bun run --cwd server seed   # seed the database (creates admin user)
 
+# Component tests (Vitest + React Testing Library)
+bun run --cwd client test        # run in watch mode
+bun run --cwd client test:run    # single run (CI)
+
 # E2E tests
 bun run test                # run Playwright tests (uses server/.env.test)
 bun run test:ui             # run Playwright tests with interactive UI
@@ -112,6 +116,32 @@ Authentication is handled by **Better Auth** (`better-auth` package).
 - `client/src/components/AdminRoute.tsx` — redirects to `/` if role is not `ADMIN`
 - Nest inside `ProtectedRoute` in the route tree; `AdminRoute` checks `session.user.role !== "ADMIN"`
 - To show UI conditionally for admins: `session?.user.role === "ADMIN"`
+
+## Component Testing (Vitest + React Testing Library)
+
+Config: `client/vite.config.ts` (`test` block) — environment `jsdom`, setup file `client/src/test/setup.ts` (imports `@testing-library/jest-dom`).
+
+- Test files live next to the component they test: `UsersPage.tsx` → `UsersPage.test.tsx`
+- Mock axios with `vi.mock("axios")` — never make real HTTP calls in component tests
+- Wrap components that use `useQuery` with `renderWithQuery` from `@/test/render-with-query` — it creates a fresh `QueryClient` per test with `retry: false` so errors surface immediately
+- Use `waitFor` when asserting on async state (after a query resolves or rejects)
+
+```tsx
+import { screen, waitFor } from "@testing-library/react";
+import { vi } from "vitest";
+import axios from "axios";
+import { renderWithQuery } from "@/test/render-with-query";
+import UsersPage from "./UsersPage";
+
+vi.mock("axios");
+const mockedAxios = vi.mocked(axios);
+
+it("renders users", async () => {
+  mockedAxios.get = vi.fn().mockResolvedValue({ data: { users: [...] } });
+  renderWithQuery(<UsersPage />);
+  await waitFor(() => expect(screen.getByText("Alice")).toBeInTheDocument());
+});
+```
 
 ## E2E Testing (Playwright)
 
