@@ -6,6 +6,7 @@
     "build": "tsc --noEmit",
     "start": "bun src/index.ts",
     "studio": "prisma studio",
+    "migrate:reset": "prisma migrate reset --force",
     "seed": "bun prisma/seed.ts"
   },
   "prisma": {

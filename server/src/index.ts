@@ -25,6 +25,7 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many login attempts, please try again later." },
+  skip: () => process.env.NODE_ENV !== "production",
 });
 app.use("/api/auth/sign-in", loginLimiter);
 
@@ -38,6 +39,7 @@ const healthLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV !== "production",
 });
 
 app.get("/api/health", healthLimiter, async (_req, res) => {
