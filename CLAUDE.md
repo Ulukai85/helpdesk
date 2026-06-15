@@ -50,6 +50,7 @@ Prisma client is generated to `server/src/generated/prisma` (non-default path). 
 **Schema location:** `server/prisma/schema.prisma`
 
 **Enums:**
+
 - `Role` — `ADMIN | AGENT` (default `AGENT`)
 - `TicketCategory` — `GENERAL_QUESTION | TECHNICAL_QUESTION | REFUND_REQUEST`
 - `TicketStatus` — `OPEN | RESOLVED | CLOSED` (default `OPEN`)
@@ -74,11 +75,11 @@ Applied in `server/src/index.ts` in this order:
 
 ## API Endpoints
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/api/health` | none | DB liveness check (`SELECT 1`) |
-| `GET` | `/api/me` | required | Returns `{ id, name, email, role }` for current user |
-| `ALL` | `/api/auth/*` | — | Better Auth routes (sign-in, sign-out, session) |
+| Method | Path          | Auth     | Description                                          |
+| ------ | ------------- | -------- | ---------------------------------------------------- |
+| `GET`  | `/api/health` | none     | DB liveness check (`SELECT 1`)                       |
+| `GET`  | `/api/me`     | required | Returns `{ id, name, email, role }` for current user |
+| `ALL`  | `/api/auth/*` | —        | Better Auth routes (sign-in, sign-out, session)      |
 
 ## Authorization
 
@@ -89,20 +90,24 @@ Authentication is handled by **Better Auth** (`better-auth` package).
 - Trusted origin: `process.env.CLIENT_URL` (defaults to `http://localhost:5173`)
 
 **Roles** (`ADMIN` | `AGENT`, Prisma enum, default `AGENT`):
+
 - Stored as a custom `role` field on the User model — not user-settable (`input: false`)
 
 **Server files:**
+
 - `server/src/auth.ts` — Better Auth config with Prisma adapter (PostgreSQL)
 - `server/src/middleware/requireAuth.ts` — middleware that calls `auth.api.getSession()`, attaches result to `req.session`, returns 401 if missing
 - Auth routes mounted at `/api/auth/*` via `toNodeHandler(auth)` — **must be registered before `express.json()`**
 
 **Client:**
+
 - `client/src/lib/auth-client.ts` — `createAuthClient` with `inferAdditionalFields` plugin to expose `role` on the client-side user type
 - Sign in: `authClient.signIn.email(data, { onSuccess, onError })`
 
 **Adding protected routes:** apply `requireAuth` middleware; check role with `req.session.user.role`.
 
 **Client-side route guards:**
+
 - `client/src/components/ProtectedRoute.tsx` — redirects to `/login` if no session
 - `client/src/components/AdminRoute.tsx` — redirects to `/` if role is not `ADMIN`
 - Nest inside `ProtectedRoute` in the route tree; `AdminRoute` checks `session.user.role !== "ADMIN"`
@@ -117,6 +122,18 @@ Config: `playwright.config.ts` — tests in `./e2e/`, base URL `http://localhost
 - **Global setup** (`e2e/global-setup.ts`): resets the test DB with `prisma migrate reset --force` before the suite
 - **Global teardown** (`e2e/global-teardown.ts`): resets the test DB again after the suite
 - Always pass the `.env.test` file when running tests: `bun --env-file=server/.env.test playwright test` (handled by `bun run test`)
+
+### Writing E2E Tests — use the `e2e-tester` agent
+
+For End2End-Testing use the **`e2e-tester`** agent rather than writing tests inline. The agent has full access to the codebase and Playwright docs.
+
+**When to invoke:** Invoke when asked to test a feature.
+
+**How to invoke:** use the Agent tool with `subagent_type: "e2e-tester"`. Brief it with:
+
+- What feature/flow was just implemented
+- Relevant file paths (page components, API routes, route guards)
+- Any special setup needed (auth state, seeded data, roles)
 
 ## Styling
 
