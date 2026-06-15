@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Outlet, Routes, Route, Navigate, useNavigate } from "react-router";
+import { Outlet, Routes, Route, Navigate, useNavigate, Link } from "react-router";
 import { authClient } from "./lib/auth-client";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 import LoginPage from "./pages/LoginPage";
+import UsersPage from "./pages/UsersPage";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -17,6 +19,13 @@ function Navbar() {
   return (
     <header className="border-b border-gray-200 bg-white px-6 py-3 flex items-center justify-between">
       <span className="font-semibold text-gray-900">Helpdesk</span>
+      <nav className="flex items-center gap-4">
+        {session?.user.role === "ADMIN" && (
+          <Link to="/users" className="text-sm text-gray-600 hover:text-gray-900">
+            Users
+          </Link>
+        )}
+      </nav>
       <div className="flex items-center gap-4">
         <span className="text-sm text-gray-600">{session?.user.name}</span>
         <button
@@ -73,6 +82,9 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AuthenticatedLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route element={<AdminRoute />}>
+            <Route path="/users" element={<UsersPage />} />
+          </Route>
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

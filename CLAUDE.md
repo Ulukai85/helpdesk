@@ -51,6 +51,12 @@ Authentication is handled by **Better Auth** (`better-auth` package).
 
 **Adding protected routes:** apply `requireAuth` middleware; check role with `req.session.user.role`.
 
+**Client-side route guards:**
+- `client/src/components/ProtectedRoute.tsx` — redirects to `/login` if no session
+- `client/src/components/AdminRoute.tsx` — redirects to `/` if role is not `ADMIN`
+- Nest inside `ProtectedRoute` in the route tree; `AdminRoute` checks `session.user.role !== "ADMIN"`
+- To show UI conditionally for admins: `session?.user.role === "ADMIN"`
+
 ## Styling
 
 UI components come from **shadcn/ui** (Tailwind v4, `base-nova` style, neutral base color).
