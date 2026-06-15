@@ -1,0 +1,1 @@
+- [Security Audit #1 — Initial Review](audit-1-findings.md) — First full security audit; key patterns, controls confirmed, and open risks recorded

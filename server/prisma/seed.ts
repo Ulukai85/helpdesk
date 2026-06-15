@@ -12,6 +12,11 @@ if (!email || !password) {
   process.exit(1);
 }
 
+if (password.length < 12) {
+  console.error('ADMIN_PASSWORD must be at least 12 characters');
+  process.exit(1);
+}
+
 const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
   emailAndPassword: { enabled: true },
