@@ -28,3 +28,35 @@ bun install           # install all workspace dependencies from root
 - Use Bun as the runtime and package manager (not npm/yarn)
 - Use TypeScript throughout
 - Always use **Context7 MCP** to fetch current documentation before writing code that involves any library or framework used in this project
+
+## Authorization
+
+Authentication is handled by **Better Auth** (`better-auth` package).
+
+- **Sign-up is disabled** — users are managed by admins and seeded via a seed script (creates an admin user)
+- Email/password auth only
+- Trusted origin: `process.env.CLIENT_URL` (defaults to `http://localhost:5173`)
+
+**Roles** (`ADMIN` | `AGENT`, Prisma enum, default `AGENT`):
+- Stored as a custom `role` field on the User model — not user-settable (`input: false`)
+
+**Server files:**
+- `server/src/auth.ts` — Better Auth config with Prisma adapter (PostgreSQL)
+- `server/src/middleware/requireAuth.ts` — middleware that calls `auth.api.getSession()`, attaches result to `req.session`, returns 401 if missing
+- Auth routes mounted at `/api/auth/*` via `toNodeHandler(auth)` — **must be registered before `express.json()`**
+
+**Client:**
+- `client/src/lib/auth-client.ts` — `createAuthClient` with `inferAdditionalFields` plugin to expose `role` on the client-side user type
+- Sign in: `authClient.signIn.email(data, { onSuccess, onError })`
+
+**Adding protected routes:** apply `requireAuth` middleware; check role with `req.session.user.role`.
+
+## Styling
+
+UI components come from **shadcn/ui** (Tailwind v4, `base-nova` style, neutral base color).
+
+- Add components with `bunx shadcn@latest add <component>` from the `client/` directory
+- Components land in `client/src/components/ui/`
+- Utilities in `client/src/lib/utils.ts` (`cn()` helper)
+- Path alias `@/*` maps to `client/src/*` (configured in `vite.config.ts` and `tsconfig.app.json`)
+- shadcn `form` component is **not available** in the `base-nova` style — use `react-hook-form`'s `register` API directly with shadcn `Input`, `Label`, `Button`, and `Card`
