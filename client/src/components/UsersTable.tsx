@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +13,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import UserFormDialog from '@/components/UserFormDialog';
 
 type User = {
@@ -25,6 +35,8 @@ type User = {
 
 export default function UsersTable() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
 
   const {
     data,
@@ -36,6 +48,15 @@ export default function UsersTable() {
       axios
         .get<{ users: User[] }>('/api/users', { withCredentials: true })
         .then((res) => res.data.users),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      axios.delete(`/api/users/${id}`, { withCredentials: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setDeletingUser(null);
+    },
   });
 
   if (loading) {
@@ -116,13 +137,26 @@ export default function UsersTable() {
                     {new Date(user.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className='text-right'>
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      aria-label='Edit user'
-                      onClick={() => setEditingUser(user)}>
-                      <Pencil className='h-4 w-4' />
-                    </Button>
+                    <div className='flex justify-end gap-1'>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        aria-label='Edit user'
+                        onClick={() => setEditingUser(user)}>
+                        <Pencil className='h-4 w-4' />
+                      </Button>
+                      {user.role !== 'ADMIN' ? (
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          aria-label='Delete user'
+                          onClick={() => setDeletingUser(user)}>
+                          <Trash2 className='h-4 w-4' />
+                        </Button>
+                      ) : (
+                        <div className='size-8' />
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -130,6 +164,7 @@ export default function UsersTable() {
           </TableBody>
         </Table>
       </div>
+
       {editingUser && (
         <UserFormDialog
           user={editingUser}
@@ -139,6 +174,33 @@ export default function UsersTable() {
           }}
         />
       )}
+
+      <AlertDialog
+        open={!!deletingUser}
+        onOpenChange={(open) => {
+          if (!open) setDeletingUser(null);
+        }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {deletingUser?.name}? This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletingUser(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant='destructive'
+              disabled={deleteMutation.isPending}
+              onClick={() => deletingUser && deleteMutation.mutate(deletingUser.id)}>
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
