@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { Pencil } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -10,6 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import UserFormDialog from '@/components/UserFormDialog';
 
 type User = {
   id: string;
@@ -20,6 +24,8 @@ type User = {
 };
 
 export default function UsersTable() {
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
   const {
     data,
     isPending: loading,
@@ -42,6 +48,7 @@ export default function UsersTable() {
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Joined</TableHead>
+              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -59,6 +66,7 @@ export default function UsersTable() {
                 <TableCell>
                   <Skeleton className='h-4 w-24' />
                 </TableCell>
+                <TableCell />
               </TableRow>
             ))}
           </TableBody>
@@ -72,44 +80,65 @@ export default function UsersTable() {
   }
 
   return (
-    <div className='rounded-md border'>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Joined</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {(data ?? []).length === 0 ? (
+    <>
+      <div className='rounded-md border'>
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell
-                colSpan={4}
-                className='text-center text-muted-foreground py-8'>
-                No users found
-              </TableCell>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Joined</TableHead>
+              <TableHead />
             </TableRow>
-          ) : (
-            (data ?? []).map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className='font-medium'>{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
-                    {user.role}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {new Date(user.createdAt).toLocaleDateString()}
+          </TableHeader>
+          <TableBody>
+            {(data ?? []).length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className='text-center text-muted-foreground py-8'>
+                  No users found
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ) : (
+              (data ?? []).map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className='font-medium'>{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
+                      {user.role}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className='text-right'>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      aria-label='Edit user'
+                      onClick={() => setEditingUser(user)}>
+                      <Pencil className='h-4 w-4' />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      {editingUser && (
+        <UserFormDialog
+          user={editingUser}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setEditingUser(null);
+          }}
+        />
+      )}
+    </>
   );
 }

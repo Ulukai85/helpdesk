@@ -1,4 +1,5 @@
 import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import axios from "axios";
 import UsersTable from "./UsersTable";
@@ -34,7 +35,7 @@ describe("UsersTable", () => {
 
     renderWithQuery(<UsersTable />);
 
-    // 5 skeleton rows × 4 cells = 20 skeleton elements
+    // 5 skeleton rows × 4 data cells = 20 skeleton elements (Actions column has no skeleton)
     const skeletons = document.querySelectorAll("[data-slot='skeleton']");
     expect(skeletons.length).toBe(20);
   });
@@ -108,5 +109,33 @@ describe("UsersTable", () => {
     expect(mockedAxios.get).toHaveBeenCalledWith("/api/users", {
       withCredentials: true,
     });
+  });
+
+  it("renders an edit button for each user row", async () => {
+    mockedAxios.get = vi.fn().mockResolvedValue({ data: { users: mockUsers } });
+
+    renderWithQuery(<UsersTable />);
+
+    await waitFor(() => screen.getByText("Alice Admin"));
+
+    const editButtons = screen.getAllByRole("button", { name: /edit user/i });
+    expect(editButtons).toHaveLength(mockUsers.length);
+  });
+
+  it("opens the edit dialog with the correct user when the edit button is clicked", async () => {
+    const user = userEvent.setup();
+    mockedAxios.get = vi.fn().mockResolvedValue({ data: { users: mockUsers } });
+    mockedAxios.patch = vi.fn(() => new Promise(() => {}));
+
+    renderWithQuery(<UsersTable />);
+
+    await waitFor(() => screen.getByText("Alice Admin"));
+
+    const editButtons = screen.getAllByRole("button", { name: /edit user/i });
+    await user.click(editButtons[0]);
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Alice Admin")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("alice@example.com")).toBeInTheDocument();
   });
 });

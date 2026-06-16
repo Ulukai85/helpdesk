@@ -2,7 +2,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios, { AxiosError } from 'axios';
-import { createUserSchema, type CreateUserData } from '@helpdesk/core';
+import {
+  createUserSchema,
+  editUserSchema,
+  type UserFormData,
+} from '@helpdesk/core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,12 +18,22 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+};
+
 interface Props {
+  user?: User;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export default function CreateUserDialog({ open, onOpenChange }: Props) {
+export default function UserFormDialog({ user, open, onOpenChange }: Props) {
+  const isEditing = !!user;
   const queryClient = useQueryClient();
 
   const {
@@ -27,13 +41,20 @@ export default function CreateUserDialog({ open, onOpenChange }: Props) {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreateUserData>({
-    resolver: zodResolver(createUserSchema),
+  } = useForm<UserFormData>({
+    resolver: zodResolver(isEditing ? editUserSchema : createUserSchema),
+    defaultValues: {
+      name: user?.name ?? '',
+      email: user?.email ?? '',
+      password: '',
+    },
   });
 
   const mutation = useMutation({
-    mutationFn: (data: CreateUserData) =>
-      axios.post('/api/users', data, { withCredentials: true }),
+    mutationFn: (data: UserFormData) =>
+      isEditing
+        ? axios.patch(`/api/users/${user.id}`, data, { withCredentials: true })
+        : axios.post('/api/users', data, { withCredentials: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       onOpenChange(false);
@@ -48,7 +69,7 @@ export default function CreateUserDialog({ open, onOpenChange }: Props) {
     onOpenChange(nextOpen);
   };
 
-  const onSubmit = (data: CreateUserData) => mutation.mutate(data);
+  const onSubmit = (data: UserFormData) => mutation.mutate(data);
 
   const errorMessage =
     mutation.error instanceof AxiosError
@@ -59,16 +80,20 @@ export default function CreateUserDialog({ open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create User</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit User' : 'Create User'}</DialogTitle>
         </DialogHeader>
         <form
-          id='create-user-form'
+          id='user-form'
           onSubmit={handleSubmit(onSubmit)}
           className='space-y-4'
           noValidate>
           <div className='space-y-1.5'>
             <Label htmlFor='name'>Name</Label>
-            <Input id='name' aria-invalid={!!errors.name} {...register('name')} />
+            <Input
+              id='name'
+              aria-invalid={!!errors.name}
+              {...register('name')}
+            />
             {errors.name && (
               <p className='text-sm text-destructive'>{errors.name.message}</p>
             )}
@@ -87,7 +112,11 @@ export default function CreateUserDialog({ open, onOpenChange }: Props) {
             )}
           </div>
           <div className='space-y-1.5'>
-            <Label htmlFor='password'>Password</Label>
+            <Label htmlFor='password'>
+              {isEditing
+                ? 'Password (leave blank to keep current)'
+                : 'Password'}
+            </Label>
             <Input
               id='password'
               type='password'
@@ -112,11 +141,14 @@ export default function CreateUserDialog({ open, onOpenChange }: Props) {
             onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            type='submit'
-            form='create-user-form'
-            disabled={mutation.isPending}>
-            {mutation.isPending ? 'Creating...' : 'Create'}
+          <Button type='submit' form='user-form' disabled={mutation.isPending}>
+            {mutation.isPending
+              ? isEditing
+                ? 'Saving...'
+                : 'Creating...'
+              : isEditing
+                ? 'Save'
+                : 'Create'}
           </Button>
         </DialogFooter>
       </DialogContent>

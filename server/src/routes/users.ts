@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { createUserSchema } from "@helpdesk/core";
+import type { ZodError } from "zod";
+import { createUserSchema, editUserSchema } from "@helpdesk/core";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireAdmin } from "../middleware/requireAdmin";
@@ -7,6 +8,8 @@ import { internalAuth } from "../lib/auth-internal";
 import { Role } from "../generated/prisma/client";
 
 const router = Router();
+
+const firstError = (e: ZodError) => e.issues[0].message;
 
 router.get("/", requireAuth, requireAdmin, async (_req, res) => {
   const users = await prisma.user.findMany({
@@ -19,7 +22,7 @@ router.get("/", requireAuth, requireAdmin, async (_req, res) => {
 router.post("/", requireAuth, requireAdmin, async (req, res) => {
   const parsed = createUserSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.issues[0].message });
+    res.status(400).json({ error: firstError(parsed.error) });
     return;
   }
 
@@ -37,6 +40,42 @@ router.post("/", requireAuth, requireAdmin, async (req, res) => {
 
   const { id, name: userName, email: userEmail } = result.user;
   res.status(201).json({ user: { id, name: userName, email: userEmail } });
+});
+
+router.patch("/:id", requireAuth, requireAdmin, async (req, res) => {
+  const parsed = editUserSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: firstError(parsed.error) });
+    return;
+  }
+
+  const id = req.params.id as string;
+  const { name, email, password } = parsed.data;
+
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const emailTaken = await prisma.user.findFirst({ where: { email, NOT: { id } } });
+  if (emailTaken) {
+    res.status(409).json({ error: "A user with this email already exists" });
+    return;
+  }
+
+  await prisma.user.update({ where: { id }, data: { name, email } });
+
+  if (password.trim()) {
+    const ctx = await internalAuth.$context;
+    const hash = await ctx.password.hash(password.trim());
+    await prisma.account.updateMany({
+      where: { userId: id, providerId: "credential" },
+      data: { password: hash },
+    });
+  }
+
+  res.json({ user: { id, name, email } });
 });
 
 export default router;
