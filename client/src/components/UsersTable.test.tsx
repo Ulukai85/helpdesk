@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import axios from "axios";
-import UsersPage from "./UsersPage";
+import UsersTable from "./UsersTable";
 import { renderWithQuery } from "@/test/render-with-query";
 
 vi.mock("axios");
@@ -28,13 +28,12 @@ beforeEach(() => {
   vi.resetAllMocks();
 });
 
-describe("UsersPage", () => {
+describe("UsersTable", () => {
   it("shows skeleton rows while loading", () => {
     mockedAxios.get = vi.fn(() => new Promise(() => {})); // never resolves
 
-    renderWithQuery(<UsersPage />);
+    renderWithQuery(<UsersTable />);
 
-    expect(screen.getByText("Users")).toBeInTheDocument();
     // 5 skeleton rows × 4 cells = 20 skeleton elements
     const skeletons = document.querySelectorAll("[data-slot='skeleton']");
     expect(skeletons.length).toBe(20);
@@ -43,7 +42,7 @@ describe("UsersPage", () => {
   it("shows an error message when the request fails", async () => {
     mockedAxios.get = vi.fn().mockRejectedValue(new Error("Network Error"));
 
-    renderWithQuery(<UsersPage />);
+    renderWithQuery(<UsersTable />);
 
     await waitFor(() =>
       expect(screen.getByText("Network Error")).toBeInTheDocument()
@@ -53,7 +52,7 @@ describe("UsersPage", () => {
   it("shows 'No users found' when the list is empty", async () => {
     mockedAxios.get = vi.fn().mockResolvedValue({ data: { users: [] } });
 
-    renderWithQuery(<UsersPage />);
+    renderWithQuery(<UsersTable />);
 
     await waitFor(() =>
       expect(screen.getByText("No users found")).toBeInTheDocument()
@@ -63,7 +62,7 @@ describe("UsersPage", () => {
   it("renders a row for each user with correct data", async () => {
     mockedAxios.get = vi.fn().mockResolvedValue({ data: { users: mockUsers } });
 
-    renderWithQuery(<UsersPage />);
+    renderWithQuery(<UsersTable />);
 
     await waitFor(() =>
       expect(screen.getByText("Alice Admin")).toBeInTheDocument()
@@ -77,21 +76,18 @@ describe("UsersPage", () => {
   it("displays ADMIN badge with default variant and AGENT with secondary", async () => {
     mockedAxios.get = vi.fn().mockResolvedValue({ data: { users: mockUsers } });
 
-    renderWithQuery(<UsersPage />);
+    renderWithQuery(<UsersTable />);
 
     await waitFor(() => screen.getByText("ADMIN"));
 
-    const adminBadge = screen.getByText("ADMIN");
-    const agentBadge = screen.getByText("AGENT");
-
-    expect(adminBadge).toBeInTheDocument();
-    expect(agentBadge).toBeInTheDocument();
+    expect(screen.getByText("ADMIN")).toBeInTheDocument();
+    expect(screen.getByText("AGENT")).toBeInTheDocument();
   });
 
   it("formats the createdAt date for each user", async () => {
     mockedAxios.get = vi.fn().mockResolvedValue({ data: { users: mockUsers } });
 
-    renderWithQuery(<UsersPage />);
+    renderWithQuery(<UsersTable />);
 
     await waitFor(() => screen.getByText("Alice Admin"));
 
@@ -105,7 +101,7 @@ describe("UsersPage", () => {
   it("calls the correct endpoint with credentials", async () => {
     mockedAxios.get = vi.fn().mockResolvedValue({ data: { users: [] } });
 
-    renderWithQuery(<UsersPage />);
+    renderWithQuery(<UsersTable />);
 
     await waitFor(() => screen.getByText("No users found"));
 

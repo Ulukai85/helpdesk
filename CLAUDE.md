@@ -8,6 +8,7 @@ AI-powered ticket management system. See `projekt-scope.md` for features and dec
 
 ```
 helpdesk/
+├── core/     # Shared TypeScript — Zod schemas and inferred types
 ├── client/   # Vite + React + TypeScript + Tailwind CSS v4 + React Router v7
 ├── server/   # Node.js + Express 5 + TypeScript (runs via Bun)
 └── e2e/      # Playwright end-to-end tests
@@ -76,6 +77,38 @@ Applied in `server/src/index.ts` in this order:
 5. `express.json({ limit: "50kb" })` — body parsing with size cap
 6. `healthLimiter` — rate-limits `/api/health`: 20 req / min (production only)
 7. Global error handler — returns opaque `"Internal server error"` in production, full `err.message` in dev
+
+## Shared Code (`core` package)
+
+The `core` workspace package (`@helpdesk/core`) holds code shared between client and server — primarily Zod schemas and their inferred types.
+
+- **Schemas live in** `core/src/schemas/<feature>.ts`, exported from `core/src/index.ts`
+- **Import in either client or server** as `import { mySchema, type MyData } from "@helpdesk/core"`
+- **Always define a Zod schema in `core`** when the same shape is validated on the server and used for a form on the client — never duplicate it
+
+```ts
+// core/src/schemas/users.ts
+import { z } from "zod";
+
+export const createUserSchema = z.object({ ... });
+export type CreateUserData = z.infer<typeof createUserSchema>;
+```
+
+Note: use `z.email()` not `z.string().email()` — the method form is deprecated in Zod v4.
+
+## Request Validation (Server)
+
+Use the shared schema from `@helpdesk/core` and call `.safeParse(req.body)`, returning the first issue message as a 400 on failure.
+
+```ts
+import { createUserSchema } from "@helpdesk/core";
+
+const parsed = createUserSchema.safeParse(req.body);
+if (!parsed.success) {
+  res.status(400).json({ error: parsed.error.issues[0].message });
+  return;
+}
+```
 
 ## API Endpoints
 
