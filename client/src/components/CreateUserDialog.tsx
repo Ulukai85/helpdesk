@@ -64,10 +64,11 @@ export default function CreateUserDialog({ open, onOpenChange }: Props) {
         <form
           id='create-user-form'
           onSubmit={handleSubmit(onSubmit)}
-          className='space-y-4'>
+          className='space-y-4'
+          noValidate>
           <div className='space-y-1.5'>
             <Label htmlFor='name'>Name</Label>
-            <Input id='name' {...register('name')} />
+            <Input id='name' aria-invalid={!!errors.name} {...register('name')} />
             {errors.name && (
               <p className='text-sm text-destructive'>{errors.name.message}</p>
             )}
@@ -78,6 +79,7 @@ export default function CreateUserDialog({ open, onOpenChange }: Props) {
               id='email'
               type='email'
               autoComplete='off'
+              aria-invalid={!!errors.email}
               {...register('email')}
             />
             {errors.email && (
@@ -90,6 +92,7 @@ export default function CreateUserDialog({ open, onOpenChange }: Props) {
               id='password'
               type='password'
               autoComplete='new-password'
+              aria-invalid={!!errors.password}
               {...register('password')}
             />
             {errors.password && (
