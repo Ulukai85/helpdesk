@@ -1,0 +1,1 @@
+- [Project e2e conventions](project-e2e-conventions.md) — auth fixtures, seeded credentials, folder structure, CRUD isolation patterns, and confirmed selectors
