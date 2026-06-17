@@ -5,6 +5,9 @@ import axios, { AxiosError } from 'axios';
 import {
   createUserSchema,
   editUserSchema,
+  type User,
+  type CreateUserData,
+  type EditUserData,
   type UserFormData,
 } from '@helpdesk/core';
 import { Button } from '@/components/ui/button';
@@ -17,14 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string;
-};
 
 interface Props {
   user?: User;
@@ -51,7 +46,7 @@ export default function UserFormDialog({ user, open, onOpenChange }: Props) {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: UserFormData) =>
+    mutationFn: (data: CreateUserData | EditUserData) =>
       isEditing
         ? axios.patch(`/api/users/${user.id}`, data, { withCredentials: true })
         : axios.post('/api/users', data, { withCredentials: true }),

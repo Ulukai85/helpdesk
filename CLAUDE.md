@@ -85,13 +85,22 @@ The `core` workspace package (`@helpdesk/core`) holds code shared between client
 - **Schemas live in** `core/src/schemas/<feature>.ts`, exported from `core/src/index.ts`
 - **Import in either client or server** as `import { mySchema, type MyData } from "@helpdesk/core"`
 - **Always define a Zod schema in `core`** when the same shape is validated on the server and used for a form on the client — never duplicate it
+- **Entity types also belong in `core`** — if a type describes the shape returned by the API (e.g. `User`), define it once in `core` and import it on both sides; never re-declare it locally in a component or route file
 
 ```ts
 // core/src/schemas/users.ts
 import { z } from "zod";
 
+export type User = { id: string; name: string; email: string; role: string; createdAt: string };
+
 export const createUserSchema = z.object({ ... });
 export type CreateUserData = z.infer<typeof createUserSchema>;
+
+export const editUserSchema = z.object({ ... });
+export type EditUserData = z.infer<typeof editUserSchema>;
+
+// Alias for shared form default values when both schemas produce the same shape
+export type UserFormData = CreateUserData;
 ```
 
 Note: use `z.email()` not `z.string().email()` — the method form is deprecated in Zod v4.
@@ -176,6 +185,12 @@ it("renders users", async () => {
 });
 ```
 
+## Client Component Structure
+
+- Layout components (`AuthenticatedLayout`, `Navbar`) live in `client/src/components/`
+- Page components live in `client/src/pages/` — one file per route
+- `App.tsx` should contain only the route tree; extract any non-trivial JSX or logic into a dedicated component or page file
+
 ## E2E Testing (Playwright)
 
 Config: `playwright.config.ts` — tests in `./e2e/`, base URL `http://localhost:5173`.
@@ -187,6 +202,8 @@ Config: `playwright.config.ts` — tests in `./e2e/`, base URL `http://localhost
 - Always pass the `.env.test` file when running tests: `bun --env-file=server/.env.test playwright test` (handled by `bun run test`)
 
 **Always run `bun run test` after implementing a new feature** to catch regressions before reporting the work as done.
+
+**E2E helpers** for repeated UI flows live in `e2e/helpers/` (e.g. `createUserViaUI` in `users.ts`). Extract any multi-step UI sequence used in more than one test into a typed helper function rather than duplicating steps inline.
 
 ### Writing E2E Tests — use the `e2e-tester` agent
 

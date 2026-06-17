@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Pencil, Trash2 } from 'lucide-react';
+import { type User, Role } from '@helpdesk/core';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,24 +26,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import UserFormDialog from '@/components/UserFormDialog';
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string;
-};
-
 export default function UsersTable() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
 
-  const {
-    data,
-    isPending: loading,
-    error,
-  } = useQuery({
+  const { data, isPending, error } = useQuery({
     queryKey: ['users'],
     queryFn: () =>
       axios
@@ -59,7 +48,7 @@ export default function UsersTable() {
     },
   });
 
-  if (loading) {
+  if (isPending) {
     return (
       <div className='rounded-md border'>
         <Table>
@@ -100,6 +89,8 @@ export default function UsersTable() {
     return <p className='text-destructive'>{error.message}</p>;
   }
 
+  const users = data ?? [];
+
   return (
     <>
       <div className='rounded-md border'>
@@ -114,7 +105,7 @@ export default function UsersTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(data ?? []).length === 0 ? (
+            {users.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={5}
@@ -123,13 +114,13 @@ export default function UsersTable() {
                 </TableCell>
               </TableRow>
             ) : (
-              (data ?? []).map((user) => (
+              users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className='font-medium'>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
+                      variant={user.role === Role.ADMIN ? 'default' : 'secondary'}>
                       {user.role}
                     </Badge>
                   </TableCell>
@@ -145,7 +136,7 @@ export default function UsersTable() {
                         onClick={() => setEditingUser(user)}>
                         <Pencil className='h-4 w-4' />
                       </Button>
-                      {user.role !== 'ADMIN' ? (
+                      {user.role !== Role.ADMIN ? (
                         <Button
                           variant='ghost'
                           size='icon'

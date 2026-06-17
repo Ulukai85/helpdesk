@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { ADMIN_STORAGE } from './helpers/auth-constants';
+import { createUserViaUI } from './helpers/users';
 
 test.describe('Users — CRUD happy paths', () => {
   test.use({ storageState: ADMIN_STORAGE });
@@ -67,17 +68,7 @@ test.describe('Users — CRUD happy paths', () => {
     const updatedName = `Updated Name ${Date.now()}`;
 
     await test.step('create a user to edit via the UI', async () => {
-      await page.getByRole('button', { name: 'Create User' }).click();
-      await expect(
-        page.getByRole('heading', { name: 'Create User' })
-      ).toBeVisible();
-      await page.getByLabel('Name').fill(originalName);
-      await page.getByLabel('Email').fill(email);
-      await page.getByLabel('Password').fill('Password123!');
-      await page.getByRole('button', { name: 'Create' }).click();
-      await expect(
-        page.getByRole('heading', { name: 'Create User' })
-      ).not.toBeVisible();
+      await createUserViaUI(page, originalName, email);
       await expect(page.getByRole('cell', { name: originalName })).toBeVisible();
     });
 
@@ -117,17 +108,7 @@ test.describe('Users — CRUD happy paths', () => {
     const name = `Delete Target ${Date.now()}`;
 
     await test.step('create a user to delete via the UI', async () => {
-      await page.getByRole('button', { name: 'Create User' }).click();
-      await expect(
-        page.getByRole('heading', { name: 'Create User' })
-      ).toBeVisible();
-      await page.getByLabel('Name').fill(name);
-      await page.getByLabel('Email').fill(email);
-      await page.getByLabel('Password').fill('Password123!');
-      await page.getByRole('button', { name: 'Create' }).click();
-      await expect(
-        page.getByRole('heading', { name: 'Create User' })
-      ).not.toBeVisible();
+      await createUserViaUI(page, name, email);
       await expect(page.getByRole('cell', { name })).toBeVisible();
     });
 
