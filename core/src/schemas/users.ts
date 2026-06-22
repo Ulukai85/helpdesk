@@ -1,11 +1,9 @@
 import { z } from "zod";
 
-export const Role = {
-  ADMIN: "ADMIN",
-  AGENT: "AGENT",
-} as const;
-
-export type Role = (typeof Role)[keyof typeof Role];
+export enum Role {
+  ADMIN = "ADMIN",
+  AGENT = "AGENT",
+}
 
 /** Shape returned by GET /api/users and PATCH /api/users/:id */
 export type User = {

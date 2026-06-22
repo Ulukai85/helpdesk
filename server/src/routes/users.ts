@@ -1,11 +1,10 @@
 import { Router } from "express";
 import type { ZodError } from "zod";
-import { createUserSchema, editUserSchema } from "@helpdesk/core";
+import { createUserSchema, editUserSchema, Role } from "@helpdesk/core";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { internalAuth } from "../lib/auth-internal";
-import { Role } from "../generated/prisma/client";
 
 const router = Router();
 

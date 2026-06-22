@@ -54,15 +54,15 @@ Prisma client is generated to `server/src/generated/prisma` (non-default path). 
 
 **Schema location:** `server/prisma/schema.prisma`
 
-**Enums:**
+**Enums** (defined as TypeScript enums in `@helpdesk/core`, mirrored in the Prisma schema):
 
-- `Role` — `ADMIN | AGENT` (default `AGENT`)
-- `TicketCategory` — `GENERAL_QUESTION | TECHNICAL_QUESTION | REFUND_REQUEST`
-- `TicketStatus` — `OPEN | RESOLVED | CLOSED` (default `OPEN`)
+- `Role` — `ADMIN | AGENT` (default `AGENT`) — `core/src/schemas/users.ts`
+- `TicketCategory` — `GENERAL_QUESTION | TECHNICAL_QUESTION | REFUND_REQUEST` — `core/src/schemas/tickets.ts`
+- `TicketStatus` — `OPEN | RESOLVED | CLOSED` (default `OPEN`) — `core/src/schemas/tickets.ts`
 
 **Models:** `User`, `Session`, `Account`, `Verification` (managed by Better Auth) + `Ticket`
 
-**Ticket fields:** `id`, `subject`, `body`, `customerEmail`, `category` (nullable), `status`, `createdAt`, `updatedAt`
+**Ticket fields:** `id` (Int, auto-increment), `subject`, `body`, `bodyHtml` (optional), `customerName`, `customerEmail`, `category` (nullable `TicketCategory`), `status` (default `OPEN`), `assignedToId` (optional FK → `User`), `createdAt`, `updatedAt`
 
 **Seed:** `server/prisma/seed.ts` — creates the initial admin user (credentials from `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars).
 
@@ -86,21 +86,25 @@ The `core` workspace package (`@helpdesk/core`) holds code shared between client
 - **Import in either client or server** as `import { mySchema, type MyData } from "@helpdesk/core"`
 - **Always define a Zod schema in `core`** when the same shape is validated on the server and used for a form on the client — never duplicate it
 - **Entity types also belong in `core`** — if a type describes the shape returned by the API (e.g. `User`), define it once in `core` and import it on both sides; never re-declare it locally in a component or route file
+- **Enums belong in `core`** — `Role`, `TicketCategory`, and `TicketStatus` are TypeScript string enums in `core`; import from `@helpdesk/core`, never from the generated Prisma client
 
 ```ts
 // core/src/schemas/users.ts
 import { z } from "zod";
 
-export type User = { id: string; name: string; email: string; role: string; createdAt: string };
+export enum Role { ADMIN = "ADMIN", AGENT = "AGENT" }
+
+export type User = { id: string; name: string; email: string; role: Role; createdAt: string };
 
 export const createUserSchema = z.object({ ... });
 export type CreateUserData = z.infer<typeof createUserSchema>;
 
-export const editUserSchema = z.object({ ... });
-export type EditUserData = z.infer<typeof editUserSchema>;
+// core/src/schemas/tickets.ts
+export enum TicketCategory { GENERAL_QUESTION = "GENERAL_QUESTION", ... }
+export enum TicketStatus { OPEN = "OPEN", RESOLVED = "RESOLVED", CLOSED = "CLOSED" }
 
-// Alias for shared form default values when both schemas produce the same shape
-export type UserFormData = CreateUserData;
+export const sendgridInboundSchema = z.object({ from, subject, text, html });
+export type SendgridInboundData = z.infer<typeof sendgridInboundSchema>;
 ```
 
 Note: use `z.email()` not `z.string().email()` — the method form is deprecated in Zod v4.
@@ -156,8 +160,8 @@ Authentication is handled by **Better Auth** (`better-auth` package).
 
 - `client/src/components/ProtectedRoute.tsx` — redirects to `/login` if no session
 - `client/src/components/AdminRoute.tsx` — redirects to `/` if role is not `ADMIN`
-- Nest inside `ProtectedRoute` in the route tree; `AdminRoute` checks `session.user.role !== "ADMIN"`
-- To show UI conditionally for admins: `session?.user.role === "ADMIN"`
+- Nest inside `ProtectedRoute` in the route tree; `AdminRoute` checks `session.user.role !== Role.ADMIN`
+- To show UI conditionally for admins: `session?.user.role === Role.ADMIN` (import `Role` from `@helpdesk/core`)
 
 ## Component Testing (Vitest + React Testing Library)
 

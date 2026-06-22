@@ -29,17 +29,18 @@ enum TicketStatus {
 // ─── Models ──────────────────────────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  image         String?
-  role          Role      @default(AGENT)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
-  sessions      Session[]
-  accounts      Account[]
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  emailVerified   Boolean   @default(false)
+  image           String?
+  role            Role      @default(AGENT)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  sessions        Session[]
+  accounts        Account[]
+  assignedTickets Ticket[]
 }
 
 model Session {
@@ -81,12 +82,16 @@ model Verification {
 }
 
 model Ticket {
-  id            String          @id @default(cuid())
+  id            Int             @id @default(autoincrement())
   subject       String
   body          String
+  bodyHtml      String?
+  customerName  String
   customerEmail String
   category      TicketCategory?
   status        TicketStatus    @default(OPEN)
+  assignedToId  String?
+  assignedTo    User?           @relation(fields: [assignedToId], references: [id])
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 }
