@@ -1,30 +1,9 @@
 import { Router } from 'express';
-import { z } from 'zod';
-import { TicketCategory, TicketStatus } from '@helpdesk/core';
+import { ticketQuerySchema } from '@helpdesk/core';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
-
-const ticketQuerySchema = z.object({
-  sortBy: z
-    .enum(['subject', 'customerName', 'status', 'category', 'createdAt'])
-    .optional()
-    .default('createdAt'),
-  sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
-  status: z
-    .enum([TicketStatus.OPEN, TicketStatus.RESOLVED, TicketStatus.CLOSED])
-    .optional(),
-  category: z
-    .enum([
-      TicketCategory.GENERAL_QUESTION,
-      TicketCategory.TECHNICAL_QUESTION,
-      TicketCategory.REFUND_REQUEST,
-      'NONE',
-    ])
-    .optional(),
-  search: z.string().optional(),
-});
 
 router.get('/', requireAuth, async (req, res) => {
   const parsed = ticketQuerySchema.safeParse(req.query);
@@ -33,7 +12,8 @@ router.get('/', requireAuth, async (req, res) => {
     return;
   }
 
-  const { sortBy, sortOrder, status, category, search } = parsed.data;
+  const { sortBy, sortOrder, status, category, search, page, pageSize } =
+    parsed.data;
 
   const where = {
     ...(status && { status }),
@@ -52,21 +32,26 @@ router.get('/', requireAuth, async (req, res) => {
     }),
   };
 
-  const tickets = await prisma.ticket.findMany({
-    select: {
-      id: true,
-      subject: true,
-      customerName: true,
-      customerEmail: true,
-      status: true,
-      category: true,
-      createdAt: true,
-    },
-    where,
-    orderBy: { [sortBy]: sortOrder },
-  });
+  const [tickets, total] = await Promise.all([
+    prisma.ticket.findMany({
+      select: {
+        id: true,
+        subject: true,
+        customerName: true,
+        customerEmail: true,
+        status: true,
+        category: true,
+        createdAt: true,
+      },
+      where,
+      orderBy: { [sortBy]: sortOrder },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.ticket.count({ where }),
+  ]);
 
-  res.json({ tickets });
+  res.json({ tickets, total });
 });
 
 export default router;
