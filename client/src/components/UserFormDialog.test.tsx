@@ -4,6 +4,7 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import axios, { AxiosError } from "axios";
 import UserFormDialog from "./UserFormDialog";
 import { renderWithQuery } from "@/test/render-with-query";
+import { Role } from "@helpdesk/core";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios);
@@ -14,7 +15,7 @@ const mockUser = {
   id: "user-1",
   name: "Alice Admin",
   email: "alice@example.com",
-  role: "ADMIN",
+  role: Role.ADMIN,
   createdAt: "2024-01-15T00:00:00.000Z",
 };
 

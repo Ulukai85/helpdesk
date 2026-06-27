@@ -6,69 +6,6 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'admin@example.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? '';
 
 // ---------------------------------------------------------------------------
-// Login page rendering
-// ---------------------------------------------------------------------------
-
-test.describe('Login page', () => {
-  test('renders sign in form with all fields', async ({ page }) => {
-    await page.goto('/login');
-    // CardTitle renders as a <div data-slot="card-title">, not a heading element
-    await expect(page.locator('[data-slot="card-title"]')).toHaveText('Sign in');
-    await expect(page.getByLabel('Email')).toBeVisible();
-    await expect(page.getByLabel('Password')).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: 'Sign in' })
-    ).toBeVisible();
-  });
-
-  test('submit button shows loading state while signing in', async ({
-    page,
-  }) => {
-    await page.goto('/login');
-    await page.getByLabel('Email').fill(ADMIN_EMAIL);
-    await page.getByLabel('Password').fill(ADMIN_PASSWORD);
-
-    // Intercept the auth request to keep it pending long enough to observe loading
-    await page.route('**/api/auth/**', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await route.continue();
-    });
-
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('button', { name: 'Signing in…' })).toBeVisible();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Client-side validation (Zod)
-// ---------------------------------------------------------------------------
-
-test.describe('Form validation', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-  });
-
-  test('shows email error when email field is empty', async ({ page }) => {
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText('Enter a valid email')).toBeVisible();
-  });
-
-  test('shows password error when password field is empty', async ({
-    page,
-  }) => {
-    await page.getByLabel('Email').fill('test@example.com');
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText('Password is required')).toBeVisible();
-  });
-
-  test('shows both errors when both fields are empty', async ({ page }) => {
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText('Enter a valid email')).toBeVisible();
-    await expect(page.getByText('Password is required')).toBeVisible();
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Server-side login failures
 // ---------------------------------------------------------------------------
 
@@ -117,17 +54,7 @@ test.describe('Successful login', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('Route guards — unauthenticated', () => {
-  test('/ redirects to /login', async ({ page }) => {
-    await page.goto('/');
-    await expect(page).toHaveURL('/login');
-  });
-
-  test('/users redirects to /login', async ({ page }) => {
-    await page.goto('/users');
-    await expect(page).toHaveURL('/login');
-  });
-
-  test('unknown route redirects to /login (via / guard)', async ({ page }) => {
+  test('unknown route redirects to /login (via / catch-all)', async ({ page }) => {
     await page.goto('/does-not-exist');
     await expect(page).toHaveURL('/login');
   });
@@ -153,11 +80,6 @@ test.describe('Route guards — admin', () => {
     await expect(page).toHaveURL('/users');
     await expect(page.getByRole('heading', { name: 'Users' })).toBeVisible();
   });
-
-  test('Users link is visible in the navbar', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByRole('link', { name: 'Users' })).toBeVisible();
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -178,11 +100,6 @@ test.describe('Route guards — agent', () => {
   test('/users redirects to / for non-admin', async ({ page }) => {
     await page.goto('/users');
     await expect(page).toHaveURL('/');
-  });
-
-  test('Users link is not visible in the navbar', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByRole('link', { name: 'Users' })).not.toBeVisible();
   });
 });
 

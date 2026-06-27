@@ -11,18 +11,6 @@ test.describe('Users — CRUD happy paths', () => {
   });
 
   // -------------------------------------------------------------------------
-  // List
-  // -------------------------------------------------------------------------
-
-  test('renders the users table with all column headers', async ({ page }) => {
-    const header = page.getByRole('row').first();
-    await expect(header.getByRole('columnheader', { name: 'Name' })).toBeVisible();
-    await expect(header.getByRole('columnheader', { name: 'Email' })).toBeVisible();
-    await expect(header.getByRole('columnheader', { name: 'Role' })).toBeVisible();
-    await expect(header.getByRole('columnheader', { name: 'Joined' })).toBeVisible();
-  });
-
-  // -------------------------------------------------------------------------
   // Create
   // -------------------------------------------------------------------------
 

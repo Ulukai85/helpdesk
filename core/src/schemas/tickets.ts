@@ -12,6 +12,16 @@ export enum TicketStatus {
   CLOSED = "CLOSED",
 }
 
+export type Ticket = {
+  id: number;
+  subject: string;
+  customerName: string;
+  customerEmail: string;
+  status: TicketStatus;
+  category: TicketCategory | null;
+  createdAt: string;
+};
+
 export const sendgridInboundSchema = z.object({
   from: z.string(),
   subject: z.string(),

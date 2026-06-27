@@ -163,13 +163,41 @@ Authentication is handled by **Better Auth** (`better-auth` package).
 - Nest inside `ProtectedRoute` in the route tree; `AdminRoute` checks `session.user.role !== Role.ADMIN`
 - To show UI conditionally for admins: `session?.user.role === Role.ADMIN` (import `Role` from `@helpdesk/core`)
 
+## Testing Strategy
+
+**Default to component tests. Only write E2E tests when a real browser, real server, or real database is required to make the assertion meaningful.**
+
+### When to write a component test (Vitest + RTL)
+
+- Rendering: does the component render the right elements?
+- Client-side validation: do Zod error messages appear?
+- UI state: loading states, empty states, error states, dialog open/close
+- Conditional rendering based on props or mocked session/role
+- User interactions that call mocked API functions (axios, authClient)
+- Route guard behavior (`ProtectedRoute`, `AdminRoute`) with a mocked session
+
+### When to write an E2E test (Playwright)
+
+Only when the test **cannot** avoid hitting a real server or database:
+
+- Auth flows that go through Better Auth (real sign-in, sign-out, session persistence)
+- Mutations that must persist to the DB and be reflected in a subsequent page load (create/edit/delete CRUD)
+- Webhook and API-level integration tests
+- App-level routing behavior that spans `App.tsx` (e.g. the `*` catch-all redirect)
+
+If you find yourself writing an E2E test for something that only uses client-side logic (rendering, validation, mocked API), move it to a component test instead.
+
+---
+
 ## Component Testing (Vitest + React Testing Library)
 
 Config: `client/vite.config.ts` (`test` block) — environment `jsdom`, setup file `client/src/test/setup.ts` (imports `@testing-library/jest-dom`).
 
 - Test files live next to the component they test: `UsersPage.tsx` → `UsersPage.test.tsx`
 - Mock axios with `vi.mock("axios")` — never make real HTTP calls in component tests
-- Wrap components that use `useQuery` with `renderWithQuery` from `@/test/render-with-query` — it creates a fresh `QueryClient` per test with `retry: false` so errors surface immediately
+- Mock `authClient` with `vi.mock("@/lib/auth-client")` for components that use `useSession` or `signIn`
+- Wrap components that use `useQuery` with `renderWithQuery` from `@/test/render-with-query` — creates a fresh `QueryClient` per test with `retry: false`
+- Wrap components that use React Router hooks (`useNavigate`, `Link`) with `renderWithRouter` from `@/test/render-with-query` — wraps in `MemoryRouter`
 - Use `waitFor` when asserting on async state (after a query resolves or rejects)
 
 ```tsx
@@ -189,6 +217,25 @@ it("renders users", async () => {
 });
 ```
 
+Mocking authClient:
+
+```tsx
+vi.mock("@/lib/auth-client", () => ({
+  authClient: {
+    useSession: vi.fn(),
+    signIn: { email: vi.fn() },
+    signOut: vi.fn(),
+  },
+}));
+
+import { authClient } from "@/lib/auth-client";
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  vi.mocked(authClient.useSession).mockReturnValue({ data: null, isPending: false } as never);
+});
+```
+
 ## Client Component Structure
 
 - Layout components (`AuthenticatedLayout`, `Navbar`) live in `client/src/components/`
@@ -205,7 +252,7 @@ Config: `playwright.config.ts` — tests in `./e2e/`, base URL `http://localhost
 - **Global teardown** (`e2e/global-teardown.ts`): resets the test DB again after the suite
 - Always pass the `.env.test` file when running tests: `bun --env-file=server/.env.test playwright test` (handled by `bun run test`)
 
-**Always run `bun run test` after implementing a new feature** to catch regressions before reporting the work as done.
+**Always run both `bun run --cwd client test:run` and `bun run test` after implementing a new feature** to catch regressions before reporting the work as done.
 
 **E2E helpers** for repeated UI flows live in `e2e/helpers/` (e.g. `createUserViaUI` in `users.ts`). Extract any multi-step UI sequence used in more than one test into a typed helper function rather than duplicating steps inline.
 

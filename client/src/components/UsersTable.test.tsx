@@ -30,6 +30,19 @@ beforeEach(() => {
 });
 
 describe("UsersTable", () => {
+  it("renders all column headers", async () => {
+    mockedAxios.get = vi.fn().mockResolvedValue({ data: { users: [] } });
+
+    renderWithQuery(<UsersTable />);
+
+    await waitFor(() => screen.getByText("No users found"));
+
+    expect(screen.getByRole("columnheader", { name: "Name" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Email" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Role" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Joined" })).toBeInTheDocument();
+  });
+
   it("shows skeleton rows while loading", () => {
     mockedAxios.get = vi.fn(() => new Promise(() => {})); // never resolves
 
