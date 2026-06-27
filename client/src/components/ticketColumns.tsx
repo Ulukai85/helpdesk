@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { Link } from 'react-router';
 import { type Ticket, TicketCategory, TicketStatus } from '@helpdesk/core';
 import { Badge } from '@/components/ui/badge';
 
@@ -22,7 +23,13 @@ const columnHelper = createColumnHelper<Ticket>();
 export const ticketColumns = [
   columnHelper.accessor('subject', {
     header: 'Subject',
-    cell: (info) => <span className='font-medium'>{info.getValue()}</span>,
+    cell: (info) => (
+      <Link
+        to={`/tickets/${info.row.original.id}`}
+        className='font-medium hover:underline'>
+        {info.getValue()}
+      </Link>
+    ),
   }),
   columnHelper.accessor('customerName', {
     header: 'Customer',

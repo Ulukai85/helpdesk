@@ -30,6 +30,13 @@ export type Ticket = {
   createdAt: string;
 };
 
+export type TicketDetail = Ticket & {
+  body: string;
+  bodyHtml: string | null;
+  assignedTo: { id: string; name: string } | null;
+  updatedAt: string;
+};
+
 export const DEFAULT_PAGE_SIZE = 10;
 
 export const ticketQuerySchema = z.object({

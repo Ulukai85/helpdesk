@@ -5,6 +5,7 @@ import AuthenticatedLayout from './components/AuthenticatedLayout';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import TicketsPage from './pages/TicketsPage';
+import TicketDetailPage from './pages/TicketDetailPage';
 import UsersPage from './pages/UsersPage';
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
         <Route element={<AuthenticatedLayout />}>
           <Route path='/' element={<HomePage />} />
           <Route path='/tickets' element={<TicketsPage />} />
+          <Route path='/tickets/:id' element={<TicketDetailPage />} />
           <Route element={<AdminRoute />}>
             <Route path='/users' element={<UsersPage />} />
           </Route>
