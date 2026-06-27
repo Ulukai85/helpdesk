@@ -7,7 +7,8 @@
     "start": "bun src/index.ts",
     "studio": "prisma studio",
     "migrate:reset": "prisma migrate reset --force",
-    "seed": "bun prisma/seed.ts"
+    "seed": "bun prisma/seed.ts",
+    "seed:tickets": "bun prisma/seed-tickets.ts"
   },
   "prisma": {
     "seed": "bun prisma/seed.ts"

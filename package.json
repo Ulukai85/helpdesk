@@ -9,7 +9,8 @@
     "db:studio:test": "bun --env-file=server/.env.test run --cwd server studio",
     "db:migrate:test": "bun --env-file=server/.env.test run --cwd server migrate:reset",
     "test": "bun --env-file=server/.env.test playwright test",
-    "test:ui": "bun --env-file=server/.env.test playwright test --ui"
+    "test:ui": "bun --env-file=server/.env.test playwright test --ui",
+    "seed:tickets": "bun run --cwd server seed:tickets"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0",
