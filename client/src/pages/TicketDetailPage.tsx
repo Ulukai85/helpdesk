@@ -9,6 +9,7 @@ import TicketDetails from '@/components/TicketDetails';
 import UpdateTicket from '@/components/UpdateTicket';
 import ReplyThread from '@/components/ReplyThread';
 import ReplyForm from '@/components/ReplyForm';
+import TicketSummary from '@/components/TicketSummary';
 import { cn } from '@/lib/utils';
 import { ArrowLeft } from 'lucide-react';
 
@@ -70,6 +71,7 @@ export default function TicketDetailPage() {
           <div className='grid grid-cols-3 gap-8 items-start'>
             <div className='col-span-2 space-y-6'>
               <TicketDetails ticket={data} />
+              <TicketSummary ticketId={data.id} />
               <ReplyThread
                 replies={replies ?? []}
                 customerName={data.customerName}

@@ -219,6 +219,57 @@ router.post('/:id/replies', requireAuth, async (req, res) => {
   res.status(201).json({ reply });
 });
 
+router.post('/:id/summarize', requireAuth, async (req, res) => {
+  const id = parseIntParam(req.params.id);
+  if (id === null) {
+    res.status(400).json({ error: 'Invalid ticket ID' });
+    return;
+  }
+
+  const ticket = await prisma.ticket.findUnique({
+    where: { id },
+    select: { subject: true, body: true, customerName: true },
+  });
+  if (!ticket) {
+    res.status(404).json({ error: 'Ticket not found' });
+    return;
+  }
+
+  const replies = await prisma.ticketReply.findMany({
+    where: { ticketId: id },
+    select: {
+      body: true,
+      authorType: true,
+      author: { select: { name: true } },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  const conversationLines = replies.map((r) => {
+    const name =
+      r.authorType === ReplyAuthorType.CUSTOMER
+        ? ticket.customerName
+        : (r.author?.name ?? 'Agent');
+    return `${name}: ${r.body}`;
+  });
+
+  const conversationSection =
+    conversationLines.length > 0
+      ? `\n\nConversation:\n${conversationLines.join('\n\n')}`
+      : '';
+
+  const { text } = await generateText({
+    model: openai('gpt-5-nano'),
+    prompt: `You are a helpdesk assistant. Summarize the following support ticket and its conversation history in 2–4 concise sentences. Focus on the customer's issue and any resolution or current status.
+
+Subject: ${ticket.subject}
+Customer: ${ticket.customerName}
+Message: ${ticket.body}${conversationSection}`,
+  });
+
+  res.json({ summary: text });
+});
+
 router.post('/:id/polish-reply', requireAuth, async (req, res) => {
   const id = parseIntParam(req.params.id);
   if (id === null) {
