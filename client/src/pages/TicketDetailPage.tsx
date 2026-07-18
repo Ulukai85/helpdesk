@@ -1,41 +1,21 @@
 import { useParams, Link } from 'react-router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import {
-  type TicketDetail,
-  type TicketReply,
-  type UpdateTicketData,
-  TicketStatus,
-  TicketCategory,
-} from '@helpdesk/core';
+import { type TicketDetail, type TicketReply } from '@helpdesk/core';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import ErrorMessage from '@/components/ErrorMessage';
-import TicketSelectField from '@/components/TicketSelectField';
+import TicketDetails from '@/components/TicketDetails';
+import UpdateTicket from '@/components/UpdateTicket';
 import ReplyThread from '@/components/ReplyThread';
 import ReplyForm from '@/components/ReplyForm';
 import { cn } from '@/lib/utils';
 import { ArrowLeft } from 'lucide-react';
-import { CATEGORY_LABEL } from '@/components/ticketColumns';
 
 type Agent = { id: string; name: string };
 
-const STATUS_OPTIONS = Object.values(TicketStatus).map((s) => ({
-  value: s,
-  label: s,
-}));
-
-const CATEGORY_OPTIONS = [
-  { value: 'none', label: 'Uncategorized' },
-  ...Object.values(TicketCategory).map((c) => ({
-    value: c,
-    label: CATEGORY_LABEL[c],
-  })),
-];
-
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const queryClient = useQueryClient();
 
   const { data, isPending, error } = useQuery({
     queryKey: ['ticket', id],
@@ -66,18 +46,6 @@ export default function TicketDetailPage() {
     enabled: !!id,
   });
 
-  const { mutate: update, isPending: isUpdating } = useMutation({
-    mutationFn: (patch: UpdateTicketData) =>
-      axios.patch(`/api/tickets/${id}`, patch, { withCredentials: true }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['ticket', id] }),
-  });
-
-  const agentOptions = [
-    { value: 'unassigned', label: 'Unassigned' },
-    ...(agents?.map((a) => ({ value: a.id, label: a.name })) ?? []),
-  ];
-
   return (
     <div className='p-8 space-y-6'>
       <Link
@@ -102,59 +70,16 @@ export default function TicketDetailPage() {
           </div>
 
           <div className='grid grid-cols-3 gap-8 items-start'>
-            {/* Left column: customer info, message, replies, reply form */}
             <div className='col-span-2 space-y-6'>
-              <div className='text-sm space-y-0.5'>
-                <p className='font-medium'>Customer</p>
-                <p>{data.customerName}</p>
-                <p className='text-muted-foreground'>{data.customerEmail}</p>
-              </div>
-
-              <div className='rounded-md border p-4 whitespace-pre-wrap text-sm'>
-                {data.body}
-              </div>
-
+              <TicketDetails ticket={data} />
               <ReplyThread
                 replies={replies ?? []}
                 customerName={data.customerName}
               />
-
-              <ReplyForm ticketId={Number(id)} />
+              <ReplyForm ticketId={data.id} />
             </div>
 
-            {/* Right column: ticket controls */}
-            <div className='space-y-3'>
-              <TicketSelectField
-                label='Status'
-                value={data.status}
-                onValueChange={(val) => update({ status: val as TicketStatus })}
-                options={STATUS_OPTIONS}
-                disabled={isUpdating}
-              />
-              <TicketSelectField
-                label='Category'
-                value={data.category ?? 'none'}
-                onValueChange={(val) =>
-                  update({
-                    category: val === 'none' ? null : (val as TicketCategory),
-                  })
-                }
-                options={CATEGORY_OPTIONS}
-                disabled={isUpdating}
-              />
-              <TicketSelectField
-                label='Assigned to'
-                value={data.assignedTo?.id ?? 'unassigned'}
-                onValueChange={(val) =>
-                  update({ assignedToId: val === 'unassigned' ? null : val })
-                }
-                options={agentOptions}
-                disabled={isUpdating || !agents}
-              />
-              <p className='text-xs text-muted-foreground pt-2'>
-                Last updated {new Date(data.updatedAt).toLocaleString()}
-              </p>
-            </div>
+            <UpdateTicket ticket={data} agents={agents} />
           </div>
         </div>
       )}

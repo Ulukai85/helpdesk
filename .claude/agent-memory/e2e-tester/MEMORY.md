@@ -1,1 +1,2 @@
 - [WEBHOOK_SECRET must be set in server/.env.test](project_webhook_secret.md) — Token validation tests fail silently without it; middleware bypasses all checks when secret is unset in non-production
+- [Ticket detail page e2e patterns](project_ticket_detail_tests.md) — selectors, shadcn Select interaction, reply flow, and createTicket helper pattern
