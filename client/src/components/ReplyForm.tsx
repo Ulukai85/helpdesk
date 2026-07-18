@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import ErrorMessage from '@/components/ErrorMessage';
 
-interface Props {
+type Props = {
   ticketId: number;
 }
 

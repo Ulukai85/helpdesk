@@ -22,7 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-interface Props {
+type Props = {
   user?: User;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -66,6 +66,10 @@ export default function UserFormDialog({ user, open, onOpenChange }: Props) {
   };
 
   const onSubmit = (data: UserFormData) => mutation.mutate(data);
+
+  const submitLabel = mutation.isPending
+    ? isEditing ? 'Saving...' : 'Creating...'
+    : isEditing ? 'Save' : 'Create';
 
   const errorMessage =
     mutation.error instanceof AxiosError
@@ -128,13 +132,7 @@ export default function UserFormDialog({ user, open, onOpenChange }: Props) {
             Cancel
           </Button>
           <Button type='submit' form='user-form' disabled={mutation.isPending}>
-            {mutation.isPending
-              ? isEditing
-                ? 'Saving...'
-                : 'Creating...'
-              : isEditing
-                ? 'Save'
-                : 'Create'}
+            {submitLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

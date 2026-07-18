@@ -298,3 +298,25 @@ UI components come from **shadcn/ui** (Tailwind v4, `base-nova` style, neutral b
 **Always prefer shadcn/ui components over custom HTML + Tailwind classes.** If a shadcn component fits the use case (Badge, Table, Dialog, etc.) but isn't installed yet, install it with `bunx shadcn@latest add <component>` — never reach for a raw `<span>` or `<table>` when a shadcn equivalent exists.
 
 Currently installed shadcn components: `alert-dialog`, `button`, `card`, `dialog`, `input`, `label`, `select`, `table`, `badge`, `skeleton`.
+
+## Ticket Display Constants
+
+Enum-to-display-label maps and badge variant maps for tickets live in `client/src/components/ticketColumns.tsx`:
+
+- `STATUS_LABEL: Record<TicketStatus, string>` — human-readable status labels (`Open`, `Resolved`, `Closed`)
+- `STATUS_VARIANT: Record<TicketStatus, BadgeVariant>` — shadcn Badge variants per status
+- `CATEGORY_LABEL: Record<TicketCategory, string>` — human-readable category labels
+
+Import these wherever status or category must be displayed as text (Select options, Badges, table cells). Never hardcode display strings like `"OPEN"` or use raw enum values as labels.
+
+## Sentinel Values in Select Components
+
+When a Select field must represent a nullable/unset state, define the sentinel string as a named module-level constant rather than an inline literal. Example: `const UNASSIGNED = 'unassigned'` and `const NO_CATEGORY = 'none'`. This prevents the string from diverging across the `value`, `defaultValue`, and comparison callbacks.
+
+## Avoid Shadowing Browser Globals
+
+Local type aliases for form data must include the feature name to avoid shadowing the browser's `FormData` interface. Use `LoginFormData`, `UserFormData`, etc. — never a bare `type FormData`.
+
+## Enum Values as String Literals
+
+Never use enum string values as magic literals in server code (e.g., `authorType: 'AGENT'`). Always reference the enum: `authorType: ReplyAuthorType.AGENT`. This ensures compile-time safety and prevents silent breakage if an enum value is renamed.

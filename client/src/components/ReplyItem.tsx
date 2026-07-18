@@ -1,6 +1,6 @@
 import { type TicketReply, ReplyAuthorType } from '@helpdesk/core';
 
-interface Props {
+type Props = {
   reply: TicketReply;
   customerName: string;
 }

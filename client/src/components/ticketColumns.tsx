@@ -12,6 +12,12 @@ export const STATUS_VARIANT: Record<
   [TicketStatus.CLOSED]: 'outline',
 };
 
+export const STATUS_LABEL: Record<TicketStatus, string> = {
+  [TicketStatus.OPEN]: 'Open',
+  [TicketStatus.RESOLVED]: 'Resolved',
+  [TicketStatus.CLOSED]: 'Closed',
+};
+
 export const CATEGORY_LABEL: Record<TicketCategory, string> = {
   [TicketCategory.GENERAL_QUESTION]: 'General Question',
   [TicketCategory.TECHNICAL_QUESTION]: 'Technical Question',
@@ -46,7 +52,7 @@ export const ticketColumns = [
     header: 'Status',
     cell: (info) => (
       <Badge variant={STATUS_VARIANT[info.getValue()]}>
-        {info.getValue()}
+        {STATUS_LABEL[info.getValue()]}
       </Badge>
     ),
   }),

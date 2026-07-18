@@ -1,6 +1,6 @@
 import { type TicketDetail } from '@helpdesk/core';
 
-interface Props {
+type Props = {
   ticket: TicketDetail;
 }
 

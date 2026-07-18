@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { ticketQuerySchema, updateTicketSchema, createReplySchema } from '@helpdesk/core';
+import {
+  ticketQuerySchema,
+  updateTicketSchema,
+  createReplySchema,
+  ReplyAuthorType,
+} from '@helpdesk/core';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
 
@@ -20,6 +25,8 @@ router.get('/', requireAuth, async (req, res) => {
   const { sortBy, sortOrder, status, category, search, page, pageSize } =
     parsed.data;
 
+  const searchTerm = search?.trim();
+
   const where = {
     ...(status && { status }),
     ...(category === 'NONE'
@@ -27,22 +34,12 @@ router.get('/', requireAuth, async (req, res) => {
       : category
         ? { category }
         : {}),
-    ...(search?.trim() && {
+    ...(searchTerm && {
       OR: [
-        { subject: { contains: search.trim(), mode: 'insensitive' as const } },
-        { body: { contains: search.trim(), mode: 'insensitive' as const } },
-        {
-          customerName: {
-            contains: search.trim(),
-            mode: 'insensitive' as const,
-          },
-        },
-        {
-          customerEmail: {
-            contains: search.trim(),
-            mode: 'insensitive' as const,
-          },
-        },
+        { subject: { contains: searchTerm, mode: 'insensitive' as const } },
+        { body: { contains: searchTerm, mode: 'insensitive' as const } },
+        { customerName: { contains: searchTerm, mode: 'insensitive' as const } },
+        { customerEmail: { contains: searchTerm, mode: 'insensitive' as const } },
       ],
     }),
   };
@@ -200,7 +197,7 @@ router.post('/:id/replies', requireAuth, async (req, res) => {
   const reply = await prisma.ticketReply.create({
     data: {
       ticketId: id,
-      authorType: 'AGENT',
+      authorType: ReplyAuthorType.AGENT,
       authorId: req.session!.user.id,
       body: parsed.data.body,
     },

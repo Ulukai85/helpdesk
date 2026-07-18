@@ -30,10 +30,12 @@ export type Ticket = {
   createdAt: string;
 };
 
+export type Agent = { id: string; name: string };
+
 export type TicketDetail = Ticket & {
   body: string;
   bodyHtml: string | null;
-  assignedTo: { id: string; name: string } | null;
+  assignedTo: Agent | null;
   updatedAt: string;
 };
 
@@ -46,7 +48,7 @@ export type TicketReply = {
   id: number;
   body: string;
   authorType: ReplyAuthorType;
-  author: { id: string; name: string } | null;
+  author: Agent | null;
   createdAt: string;
 };
 

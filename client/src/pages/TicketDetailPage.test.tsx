@@ -7,6 +7,7 @@ import { MemoryRouter, Routes, Route } from 'react-router';
 import axios from 'axios';
 import TicketDetailPage from './TicketDetailPage';
 import { type TicketDetail, TicketStatus, TicketCategory } from '@helpdesk/core';
+import { STATUS_LABEL } from '@/components/ticketColumns';
 
 vi.mock('axios');
 const mockedAxios = vi.mocked(axios);
@@ -32,8 +33,8 @@ const mockTicketBase: TicketDetail = {
 
 function mockGet(ticket = mockTicketBase, agents = mockAgents) {
   mockedAxios.get = vi.fn().mockImplementation((url: string) => {
-    if (url.includes('/api/tickets/'))
-      return Promise.resolve({ data: { ticket } });
+    if (url.includes('/replies')) return Promise.resolve({ data: { replies: [] } });
+    if (url.includes('/api/tickets/')) return Promise.resolve({ data: { ticket } });
     return Promise.resolve({ data: { agents } });
   });
 }
@@ -109,7 +110,7 @@ describe('TicketDetailPage', () => {
       expect(screen.getByRole('combobox', { name: /status/i })).toBeInTheDocument(),
     );
     expect(screen.getByRole('combobox', { name: /status/i })).toHaveTextContent(
-      TicketStatus.OPEN,
+      STATUS_LABEL[TicketStatus.OPEN],
     );
   });
 
@@ -204,10 +205,10 @@ describe('TicketDetailPage', () => {
     await user.click(screen.getByRole('combobox', { name: /status/i }));
 
     await waitFor(() =>
-      expect(screen.getByText(TicketStatus.RESOLVED)).toBeInTheDocument(),
+      expect(screen.getByText(STATUS_LABEL[TicketStatus.RESOLVED])).toBeInTheDocument(),
     );
 
-    await user.click(screen.getByText(TicketStatus.RESOLVED));
+    await user.click(screen.getByText(STATUS_LABEL[TicketStatus.RESOLVED]));
 
     await waitFor(() =>
       expect(mockedAxios.patch).toHaveBeenCalledWith(

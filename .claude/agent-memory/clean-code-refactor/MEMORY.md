@@ -1,2 +1,3 @@
 - [User & Codebase Profile](user-codebase-profile.md) — full-stack TS dev, approves batched refactor audits, apply all changes in one session
 - [Feedback: Apply All Approved Changes At Once](feedback-apply-all-at-once.md) — don't stop for confirmation when user has pre-approved a change list
+- [Ticket Display Patterns](project-ticket-display-patterns.md) — ticketColumns.tsx owns all enum-to-label maps; sentinel Select values belong as named constants

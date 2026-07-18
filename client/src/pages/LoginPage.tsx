@@ -15,7 +15,7 @@ const schema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-type FormData = z.infer<typeof schema>;
+type LoginFormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -25,13 +25,13 @@ export default function LoginPage() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<LoginFormData>({ resolver: zodResolver(schema) });
 
   useEffect(() => {
     if (session) navigate('/');
   }, [session, navigate]);
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     const { error } = await authClient.signIn.email(data);
     if (error) setError('root', { message: error.message });
   };

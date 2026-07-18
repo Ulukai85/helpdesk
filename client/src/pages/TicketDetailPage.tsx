@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { type TicketDetail, type TicketReply } from '@helpdesk/core';
+import { type TicketDetail, type TicketReply, type Agent } from '@helpdesk/core';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import ErrorMessage from '@/components/ErrorMessage';
@@ -11,8 +11,6 @@ import ReplyThread from '@/components/ReplyThread';
 import ReplyForm from '@/components/ReplyForm';
 import { cn } from '@/lib/utils';
 import { ArrowLeft } from 'lucide-react';
-
-type Agent = { id: string; name: string };
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();

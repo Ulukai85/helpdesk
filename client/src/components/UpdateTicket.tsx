@@ -3,28 +3,30 @@ import axios from 'axios';
 import {
   type TicketDetail,
   type UpdateTicketData,
+  type Agent,
   TicketStatus,
   TicketCategory,
 } from '@helpdesk/core';
 import TicketSelectField from '@/components/TicketSelectField';
-import { CATEGORY_LABEL } from '@/components/ticketColumns';
+import { CATEGORY_LABEL, STATUS_LABEL } from '@/components/ticketColumns';
 
-type Agent = { id: string; name: string };
+const UNASSIGNED = 'unassigned';
+const NO_CATEGORY = 'none';
 
 const STATUS_OPTIONS = Object.values(TicketStatus).map((s) => ({
   value: s,
-  label: s,
+  label: STATUS_LABEL[s],
 }));
 
 const CATEGORY_OPTIONS = [
-  { value: 'none', label: 'Uncategorized' },
+  { value: NO_CATEGORY, label: 'Uncategorized' },
   ...Object.values(TicketCategory).map((c) => ({
     value: c,
     label: CATEGORY_LABEL[c],
   })),
 ];
 
-interface Props {
+type Props = {
   ticket: TicketDetail;
   agents: Agent[] | undefined;
 }
@@ -40,7 +42,7 @@ export default function UpdateTicket({ ticket, agents }: Props) {
   });
 
   const agentOptions = [
-    { value: 'unassigned', label: 'Unassigned' },
+    { value: UNASSIGNED, label: 'Unassigned' },
     ...(agents?.map((a) => ({ value: a.id, label: a.name })) ?? []),
   ];
 
@@ -55,10 +57,10 @@ export default function UpdateTicket({ ticket, agents }: Props) {
       />
       <TicketSelectField
         label='Category'
-        value={ticket.category ?? 'none'}
+        value={ticket.category ?? NO_CATEGORY}
         onValueChange={(val) =>
           update({
-            category: val === 'none' ? null : (val as TicketCategory),
+            category: val === NO_CATEGORY ? null : (val as TicketCategory),
           })
         }
         options={CATEGORY_OPTIONS}
@@ -66,9 +68,9 @@ export default function UpdateTicket({ ticket, agents }: Props) {
       />
       <TicketSelectField
         label='Assigned to'
-        value={ticket.assignedTo?.id ?? 'unassigned'}
+        value={ticket.assignedTo?.id ?? UNASSIGNED}
         onValueChange={(val) =>
-          update({ assignedToId: val === 'unassigned' ? null : val })
+          update({ assignedToId: val === UNASSIGNED ? null : val })
         }
         options={agentOptions}
         disabled={isUpdating || !agents}
