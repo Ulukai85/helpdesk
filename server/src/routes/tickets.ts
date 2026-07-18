@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
 import {
   ticketQuerySchema,
   updateTicketSchema,
@@ -38,8 +40,12 @@ router.get('/', requireAuth, async (req, res) => {
       OR: [
         { subject: { contains: searchTerm, mode: 'insensitive' as const } },
         { body: { contains: searchTerm, mode: 'insensitive' as const } },
-        { customerName: { contains: searchTerm, mode: 'insensitive' as const } },
-        { customerEmail: { contains: searchTerm, mode: 'insensitive' as const } },
+        {
+          customerName: { contains: searchTerm, mode: 'insensitive' as const },
+        },
+        {
+          customerEmail: { contains: searchTerm, mode: 'insensitive' as const },
+        },
       ],
     }),
   };
@@ -211,6 +217,42 @@ router.post('/:id/replies', requireAuth, async (req, res) => {
   });
 
   res.status(201).json({ reply });
+});
+
+router.post('/:id/polish-reply', requireAuth, async (req, res) => {
+  const id = parseIntParam(req.params.id);
+  if (id === null) {
+    res.status(400).json({ error: 'Invalid ticket ID' });
+    return;
+  }
+
+  const parsed = createReplySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0].message });
+    return;
+  }
+
+  const ticket = await prisma.ticket.findUnique({
+    where: { id },
+    select: { subject: true, body: true },
+  });
+  if (!ticket) {
+    res.status(404).json({ error: 'Ticket not found' });
+    return;
+  }
+
+  const { text } = await generateText({
+    model: openai('gpt-5-nano'),
+    prompt: `You are a customer support agent. Improve the following draft reply to make it more professional, clear, and helpful. Preserve the original intent and information. Return only the improved reply text with no extra commentary.
+
+Ticket subject: ${ticket.subject}
+Customer message: ${ticket.body}
+
+Draft reply:
+${parsed.data.body}`,
+  });
+
+  res.json({ body: text });
 });
 
 export default router;

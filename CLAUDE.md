@@ -297,7 +297,7 @@ UI components come from **shadcn/ui** (Tailwind v4, `base-nova` style, neutral b
 
 **Always prefer shadcn/ui components over custom HTML + Tailwind classes.** If a shadcn component fits the use case (Badge, Table, Dialog, etc.) but isn't installed yet, install it with `bunx shadcn@latest add <component>` — never reach for a raw `<span>` or `<table>` when a shadcn equivalent exists.
 
-Currently installed shadcn components: `alert-dialog`, `button`, `card`, `dialog`, `input`, `label`, `select`, `table`, `badge`, `skeleton`.
+Currently installed shadcn components: `alert-dialog`, `button`, `card`, `dialog`, `input`, `label`, `select`, `table`, `badge`, `skeleton`, `textarea`.
 
 ## Ticket Display Constants
 
