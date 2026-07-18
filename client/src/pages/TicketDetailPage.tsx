@@ -3,13 +3,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import {
   type TicketDetail,
+  type TicketReply,
   type UpdateTicketData,
   TicketStatus,
   TicketCategory,
 } from '@helpdesk/core';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import ErrorMessage from '@/components/ErrorMessage';
 import TicketSelectField from '@/components/TicketSelectField';
+import ReplyThread from '@/components/ReplyThread';
+import ReplyForm from '@/components/ReplyForm';
 import { cn } from '@/lib/utils';
 import { ArrowLeft } from 'lucide-react';
 import { CATEGORY_LABEL } from '@/components/ticketColumns';
@@ -51,6 +55,17 @@ export default function TicketDetailPage() {
         .then((res) => res.data.agents),
   });
 
+  const { data: replies } = useQuery({
+    queryKey: ['ticket-replies', id],
+    queryFn: () =>
+      axios
+        .get<{ replies: TicketReply[] }>(`/api/tickets/${id}/replies`, {
+          withCredentials: true,
+        })
+        .then((res) => res.data.replies),
+    enabled: !!id,
+  });
+
   const { mutate: update, isPending: isUpdating } = useMutation({
     mutationFn: (patch: UpdateTicketData) =>
       axios.patch(`/api/tickets/${id}`, patch, { withCredentials: true }),
@@ -75,9 +90,9 @@ export default function TicketDetailPage() {
       {isPending ? (
         <TicketDetailSkeleton />
       ) : error ? (
-        <p className='text-destructive'>{error.message}</p>
+        <ErrorMessage message={error.message} />
       ) : (
-        <div className='space-y-6'>
+        <div className='space-y-4'>
           <div className='space-y-1'>
             <h1 className='text-2xl font-bold'>{data.subject}</h1>
             <p className='text-sm text-muted-foreground'>
@@ -86,13 +101,28 @@ export default function TicketDetailPage() {
             </p>
           </div>
 
-          <div className='grid grid-cols-2 gap-4'>
-            <div className='text-sm'>
-              <p className='font-medium'>Customer</p>
-              <p>{data.customerName}</p>
-              <p className='text-muted-foreground'>{data.customerEmail}</p>
+          <div className='grid grid-cols-3 gap-8 items-start'>
+            {/* Left column: customer info, message, replies, reply form */}
+            <div className='col-span-2 space-y-6'>
+              <div className='text-sm space-y-0.5'>
+                <p className='font-medium'>Customer</p>
+                <p>{data.customerName}</p>
+                <p className='text-muted-foreground'>{data.customerEmail}</p>
+              </div>
+
+              <div className='rounded-md border p-4 whitespace-pre-wrap text-sm'>
+                {data.body}
+              </div>
+
+              <ReplyThread
+                replies={replies ?? []}
+                customerName={data.customerName}
+              />
+
+              <ReplyForm ticketId={Number(id)} />
             </div>
 
+            {/* Right column: ticket controls */}
             <div className='space-y-3'>
               <TicketSelectField
                 label='Status'
@@ -121,16 +151,11 @@ export default function TicketDetailPage() {
                 options={agentOptions}
                 disabled={isUpdating || !agents}
               />
+              <p className='text-xs text-muted-foreground pt-2'>
+                Last updated {new Date(data.updatedAt).toLocaleString()}
+              </p>
             </div>
           </div>
-
-          <div className='rounded-md border p-4 whitespace-pre-wrap text-sm'>
-            {data.body}
-          </div>
-
-          <p className='text-xs text-muted-foreground'>
-            Last updated {new Date(data.updatedAt).toLocaleString()}
-          </p>
         </div>
       )}
     </div>
@@ -142,15 +167,17 @@ function TicketDetailSkeleton() {
     <div className='space-y-6'>
       <Skeleton className='h-8 w-96' />
       <Skeleton className='h-4 w-48' />
-      <div className='grid grid-cols-2 gap-4'>
-        <Skeleton className='h-12 w-48' />
+      <div className='grid grid-cols-3 gap-8'>
+        <div className='col-span-2 space-y-4'>
+          <Skeleton className='h-12 w-48' />
+          <Skeleton className='h-32 w-full' />
+        </div>
         <div className='space-y-3'>
           <Skeleton className='h-14 w-full' />
           <Skeleton className='h-14 w-full' />
           <Skeleton className='h-14 w-full' />
         </div>
       </div>
-      <Skeleton className='h-32 w-full' />
     </div>
   );
 }

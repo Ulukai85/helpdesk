@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ErrorMessage from '@/components/ErrorMessage';
 import {
   Dialog,
   DialogContent,
@@ -89,9 +90,7 @@ export default function UserFormDialog({ user, open, onOpenChange }: Props) {
               aria-invalid={!!errors.name}
               {...register('name')}
             />
-            {errors.name && (
-              <p className='text-sm text-destructive'>{errors.name.message}</p>
-            )}
+            <ErrorMessage message={errors.name?.message} />
           </div>
           <div className='space-y-1.5'>
             <Label htmlFor='email'>Email</Label>
@@ -102,9 +101,7 @@ export default function UserFormDialog({ user, open, onOpenChange }: Props) {
               aria-invalid={!!errors.email}
               {...register('email')}
             />
-            {errors.email && (
-              <p className='text-sm text-destructive'>{errors.email.message}</p>
-            )}
+            <ErrorMessage message={errors.email?.message} />
           </div>
           <div className='space-y-1.5'>
             <Label htmlFor='password'>
@@ -119,15 +116,9 @@ export default function UserFormDialog({ user, open, onOpenChange }: Props) {
               aria-invalid={!!errors.password}
               {...register('password')}
             />
-            {errors.password && (
-              <p className='text-sm text-destructive'>
-                {errors.password.message}
-              </p>
-            )}
+            <ErrorMessage message={errors.password?.message} />
           </div>
-          {errorMessage && (
-            <p className='text-sm text-destructive'>{errorMessage}</p>
-          )}
+          <ErrorMessage message={errorMessage} />
         </form>
         <DialogFooter>
           <Button

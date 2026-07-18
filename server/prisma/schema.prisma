@@ -26,21 +26,27 @@ enum TicketStatus {
   CLOSED
 }
 
+enum ReplyAuthorType {
+  AGENT
+  CUSTOMER
+}
+
 // ─── Models ──────────────────────────────────────────────────────────────────
 
 model User {
-  id              String    @id @default(cuid())
+  id              String        @id @default(cuid())
   name            String
-  email           String    @unique
-  emailVerified   Boolean   @default(false)
+  email           String        @unique
+  emailVerified   Boolean       @default(false)
   image           String?
-  role            Role      @default(AGENT)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  role            Role          @default(AGENT)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   deletedAt       DateTime?
   sessions        Session[]
   accounts        Account[]
   assignedTickets Ticket[]
+  replies         TicketReply[]
 }
 
 model Session {
@@ -94,4 +100,16 @@ model Ticket {
   assignedTo    User?           @relation(fields: [assignedToId], references: [id])
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  replies       TicketReply[]
+}
+
+model TicketReply {
+  id         Int             @id @default(autoincrement())
+  ticketId   Int
+  ticket     Ticket          @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorType ReplyAuthorType
+  authorId   String?
+  author     User?           @relation(fields: [authorId], references: [id])
+  body       String
+  createdAt  DateTime        @default(now())
 }

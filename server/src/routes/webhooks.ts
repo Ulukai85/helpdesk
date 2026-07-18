@@ -21,6 +21,11 @@ function extractBody(text: string, html: string): string {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function extractTicketId(subject: string): number | null {
+  const match = /#(\d+)/.exec(subject);
+  return match ? parseInt(match[1]) : null;
+}
+
 router.post('/inbound-email', requireWebhookToken, upload.none(), async (req, res) => {
   const parsed = sendgridInboundSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -31,6 +36,20 @@ router.post('/inbound-email', requireWebhookToken, upload.none(), async (req, re
   const { from, subject, text, html } = parsed.data;
   const { name: customerName, email: customerEmail } = parseFrom(from);
   const body = extractBody(text, html);
+
+  const ticketId = extractTicketId(subject);
+  if (ticketId !== null) {
+    const existing = await prisma.ticket.findFirst({
+      where: { id: ticketId, customerEmail },
+    });
+    if (existing) {
+      await prisma.ticketReply.create({
+        data: { ticketId: existing.id, authorType: 'CUSTOMER', body },
+      });
+      res.status(200).json({ id: existing.id });
+      return;
+    }
+  }
 
   const ticket = await prisma.ticket.create({
     data: { subject: subject.trim(), body, customerName, customerEmail },

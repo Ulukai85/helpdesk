@@ -37,6 +37,25 @@ export type TicketDetail = Ticket & {
   updatedAt: string;
 };
 
+export enum ReplyAuthorType {
+  AGENT = 'AGENT',
+  CUSTOMER = 'CUSTOMER',
+}
+
+export type TicketReply = {
+  id: number;
+  body: string;
+  authorType: ReplyAuthorType;
+  author: { id: string; name: string } | null;
+  createdAt: string;
+};
+
+export const createReplySchema = z.object({
+  body: z.string().min(1, 'Reply cannot be empty'),
+});
+
+export type CreateReplyData = z.infer<typeof createReplySchema>;
+
 export const DEFAULT_PAGE_SIZE = 10;
 
 export const ticketQuerySchema = z.object({

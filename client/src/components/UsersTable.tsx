@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Pencil, Trash2 } from 'lucide-react';
 import { type User, Role } from '@helpdesk/core';
 import { Skeleton } from '@/components/ui/skeleton';
+import ErrorMessage from '@/components/ErrorMessage';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -86,7 +87,7 @@ export default function UsersTable() {
   }
 
   if (error) {
-    return <p className='text-destructive'>{error.message}</p>;
+    return <ErrorMessage message={error.message} />;
   }
 
   const users = data ?? [];

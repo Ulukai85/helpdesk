@@ -1,9 +1,14 @@
 import { Router } from 'express';
-import { ticketQuerySchema, updateTicketSchema } from '@helpdesk/core';
+import { ticketQuerySchema, updateTicketSchema, createReplySchema } from '@helpdesk/core';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
+
+function parseIntParam(value: string | string[] | undefined): number | null {
+  const n = parseInt(String(value));
+  return isNaN(n) ? null : n;
+}
 
 router.get('/', requireAuth, async (req, res) => {
   const parsed = ticketQuerySchema.safeParse(req.query);
@@ -65,8 +70,8 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 router.get('/:id', requireAuth, async (req, res) => {
-  const id = parseInt(String(req.params.id));
-  if (isNaN(id)) {
+  const id = parseIntParam(req.params.id);
+  if (id === null) {
     res.status(400).json({ error: 'Invalid ticket ID' });
     return;
   }
@@ -97,8 +102,8 @@ router.get('/:id', requireAuth, async (req, res) => {
 });
 
 router.patch('/:id', requireAuth, async (req, res) => {
-  const id = parseInt(String(req.params.id));
-  if (isNaN(id)) {
+  const id = parseIntParam(req.params.id);
+  if (id === null) {
     res.status(400).json({ error: 'Invalid ticket ID' });
     return;
   }
@@ -143,6 +148,72 @@ router.patch('/:id', requireAuth, async (req, res) => {
   });
 
   res.json({ ticket: updated });
+});
+
+router.get('/:id/replies', requireAuth, async (req, res) => {
+  const id = parseIntParam(req.params.id);
+  if (id === null) {
+    res.status(400).json({ error: 'Invalid ticket ID' });
+    return;
+  }
+
+  const ticket = await prisma.ticket.findUnique({ where: { id } });
+  if (!ticket) {
+    res.status(404).json({ error: 'Ticket not found' });
+    return;
+  }
+
+  const replies = await prisma.ticketReply.findMany({
+    where: { ticketId: id },
+    select: {
+      id: true,
+      body: true,
+      authorType: true,
+      author: { select: { id: true, name: true } },
+      createdAt: true,
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  res.json({ replies });
+});
+
+router.post('/:id/replies', requireAuth, async (req, res) => {
+  const id = parseIntParam(req.params.id);
+  if (id === null) {
+    res.status(400).json({ error: 'Invalid ticket ID' });
+    return;
+  }
+
+  const parsed = createReplySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0].message });
+    return;
+  }
+
+  const ticket = await prisma.ticket.findUnique({ where: { id } });
+  if (!ticket) {
+    res.status(404).json({ error: 'Ticket not found' });
+    return;
+  }
+
+  const reply = await prisma.ticketReply.create({
+    data: {
+      ticketId: id,
+      authorType: 'AGENT',
+      authorId: req.session!.user.id,
+      body: parsed.data.body,
+    },
+    select: {
+      id: true,
+      body: true,
+      authorType: true,
+      author: { select: { id: true, name: true } },
+      createdAt: true,
+    },
+  });
+
+  res.status(201).json({ reply });
 });
 
 export default router;
