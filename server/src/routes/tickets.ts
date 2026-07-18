@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ticketQuerySchema } from '@helpdesk/core';
+import { ticketQuerySchema, updateTicketSchema } from '@helpdesk/core';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
 
@@ -26,8 +26,18 @@ router.get('/', requireAuth, async (req, res) => {
       OR: [
         { subject: { contains: search.trim(), mode: 'insensitive' as const } },
         { body: { contains: search.trim(), mode: 'insensitive' as const } },
-        { customerName: { contains: search.trim(), mode: 'insensitive' as const } },
-        { customerEmail: { contains: search.trim(), mode: 'insensitive' as const } },
+        {
+          customerName: {
+            contains: search.trim(),
+            mode: 'insensitive' as const,
+          },
+        },
+        {
+          customerEmail: {
+            contains: search.trim(),
+            mode: 'insensitive' as const,
+          },
+        },
       ],
     }),
   };
@@ -84,6 +94,49 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 
   res.json({ ticket });
+});
+
+router.patch('/:id', requireAuth, async (req, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id)) {
+    res.status(400).json({ error: 'Invalid ticket ID' });
+    return;
+  }
+
+  const parsed = updateTicketSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0].message });
+    return;
+  }
+
+  const ticket = await prisma.ticket.findUnique({ where: { id } });
+  if (!ticket) {
+    res.status(404).json({ error: 'Ticket not found' });
+    return;
+  }
+
+  const { assignedToId } = parsed.data;
+
+  if (assignedToId !== null) {
+    const agent = await prisma.user.findUnique({
+      where: { id: assignedToId, deletedAt: null },
+    });
+    if (!agent) {
+      res.status(404).json({ error: 'Agent not found' });
+      return;
+    }
+  }
+
+  const updated = await prisma.ticket.update({
+    where: { id },
+    data: { assignedToId },
+    select: {
+      id: true,
+      assignedTo: { select: { id: true, name: true } },
+    },
+  });
+
+  res.json({ ticket: updated });
 });
 
 export default router;

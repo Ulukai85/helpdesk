@@ -1,16 +1,25 @@
 import { useParams, Link } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { type TicketDetail } from '@helpdesk/core';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { ArrowLeft } from 'lucide-react';
 import { STATUS_VARIANT, CATEGORY_LABEL } from '@/components/ticketColumns';
 
+type Agent = { id: string; name: string };
+
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
 
   const { data, isPending, error } = useQuery({
     queryKey: ['ticket', id],
@@ -20,6 +29,27 @@ export default function TicketDetailPage() {
           withCredentials: true,
         })
         .then((res) => res.data.ticket),
+  });
+
+  const { data: agents } = useQuery({
+    queryKey: ['agents'],
+    queryFn: () =>
+      axios
+        .get<{ agents: Agent[] }>('/api/agents', {
+          withCredentials: true,
+        })
+        .then((res) => res.data.agents),
+  });
+
+  const { mutate: assign, isPending: isAssigning } = useMutation({
+    mutationFn: (assignedToId: string | null) =>
+      axios.patch(
+        `/api/tickets/${id}`,
+        { assignedToId },
+        { withCredentials: true },
+      ),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['ticket', id] }),
   });
 
   return (
@@ -58,12 +88,29 @@ export default function TicketDetailPage() {
               <p>{data.customerName}</p>
               <p className='text-muted-foreground'>{data.customerEmail}</p>
             </div>
-            {data.assignedTo && (
-              <div>
-                <p className='font-medium'>Assigned to</p>
-                <p>{data.assignedTo.name}</p>
-              </div>
-            )}
+            <div>
+              <p className='font-medium mb-1'>Assigned to</p>
+              <Select
+                value={data.assignedTo?.id ?? 'unassigned'}
+                onValueChange={(val) =>
+                  assign(val === 'unassigned' ? null : val)
+                }
+                disabled={isAssigning || !agents}>
+                <SelectTrigger className='w-48'>
+                  <span className='flex flex-1 text-left'>
+                    {data.assignedTo?.name ?? 'Unassigned'}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='unassigned'>Unassigned</SelectItem>
+                  {agents?.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className='rounded-md border p-4 whitespace-pre-wrap text-sm'>

@@ -8,6 +8,7 @@ import { prisma } from './lib/prisma';
 import { requireAuth } from './middleware/requireAuth';
 import usersRouter from './routes/users';
 import ticketsRouter from './routes/tickets';
+import agentsRouter from './routes/agents';
 import webhooksRouter from './routes/webhooks';
 
 const app = express();
@@ -57,6 +58,7 @@ app.get('/api/me', requireAuth, (req, res) => {
 
 app.use('/api/users', usersRouter);
 app.use('/api/tickets', ticketsRouter);
+app.use('/api/agents', agentsRouter);
 app.use('/api/webhooks', webhooksRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
