@@ -40,27 +40,11 @@ export type TicketDetail = Ticket & {
 export const DEFAULT_PAGE_SIZE = 10;
 
 export const ticketQuerySchema = z.object({
-  sortBy: z
-    .enum([
-      TicketSortBy.SUBJECT,
-      TicketSortBy.CUSTOMER_NAME,
-      TicketSortBy.STATUS,
-      TicketSortBy.CATEGORY,
-      TicketSortBy.CREATED_AT,
-    ])
-    .optional()
-    .default(TicketSortBy.CREATED_AT),
+  sortBy: z.enum(TicketSortBy).optional().default(TicketSortBy.CREATED_AT),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
-  status: z
-    .enum([TicketStatus.OPEN, TicketStatus.RESOLVED, TicketStatus.CLOSED])
-    .optional(),
+  status: z.enum(TicketStatus).optional(),
   category: z
-    .enum([
-      TicketCategory.GENERAL_QUESTION,
-      TicketCategory.TECHNICAL_QUESTION,
-      TicketCategory.REFUND_REQUEST,
-      'NONE',
-    ])
+    .union([z.enum(TicketCategory), z.literal('NONE')])
     .optional(),
   search: z.string().optional(),
   page: z.coerce.number().int().min(1).optional().default(1),
@@ -76,7 +60,9 @@ export const ticketQuerySchema = z.object({
 export type TicketQueryData = z.infer<typeof ticketQuerySchema>;
 
 export const updateTicketSchema = z.object({
-  assignedToId: z.string().nullable(),
+  assignedToId: z.string().nullable().optional(),
+  status: z.enum(TicketStatus).optional(),
+  category: z.enum(TicketCategory).nullable().optional(),
 });
 
 export type UpdateTicketData = z.infer<typeof updateTicketSchema>;

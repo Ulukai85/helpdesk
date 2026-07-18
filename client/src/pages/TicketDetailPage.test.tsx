@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import axios from 'axios';
 import TicketDetailPage from './TicketDetailPage';
-import { TicketStatus, TicketCategory } from '@helpdesk/core';
+import { type TicketDetail, TicketStatus, TicketCategory } from '@helpdesk/core';
 
 vi.mock('axios');
 const mockedAxios = vi.mocked(axios);
@@ -16,7 +16,7 @@ const mockAgents = [
   { id: 'agent-2', name: 'Bob Agent' },
 ];
 
-const mockTicketBase = {
+const mockTicketBase: TicketDetail = {
   id: 42,
   subject: 'My printer is on fire',
   body: 'It started smoking and then burst into flames.',
@@ -29,6 +29,14 @@ const mockTicketBase = {
   createdAt: '2024-06-01T10:00:00.000Z',
   updatedAt: '2024-06-02T12:00:00.000Z',
 };
+
+function mockGet(ticket = mockTicketBase, agents = mockAgents) {
+  mockedAxios.get = vi.fn().mockImplementation((url: string) => {
+    if (url.includes('/api/tickets/'))
+      return Promise.resolve({ data: { ticket } });
+    return Promise.resolve({ data: { agents } });
+  });
+}
 
 function renderPage(ticketId = '42') {
   const client = new QueryClient({
@@ -61,7 +69,8 @@ describe('TicketDetailPage', () => {
 
   it('shows an error message when the ticket request fails', async () => {
     mockedAxios.get = vi.fn().mockImplementation((url: string) => {
-      if (url.includes('/api/tickets/')) return Promise.reject(new Error('Network Error'));
+      if (url.includes('/api/tickets/'))
+        return Promise.reject(new Error('Network Error'));
       return Promise.resolve({ data: { agents: mockAgents } });
     });
 
@@ -73,11 +82,7 @@ describe('TicketDetailPage', () => {
   });
 
   it('renders ticket subject and metadata', async () => {
-    mockedAxios.get = vi.fn().mockImplementation((url: string) => {
-      if (url.includes('/api/tickets/')) return Promise.resolve({ data: { ticket: mockTicketBase } });
-      return Promise.resolve({ data: { agents: mockAgents } });
-    });
-
+    mockGet();
     renderPage();
 
     await waitFor(() =>
@@ -87,11 +92,7 @@ describe('TicketDetailPage', () => {
   });
 
   it('renders customer name and email', async () => {
-    mockedAxios.get = vi.fn().mockImplementation((url: string) => {
-      if (url.includes('/api/tickets/')) return Promise.resolve({ data: { ticket: mockTicketBase } });
-      return Promise.resolve({ data: { agents: mockAgents } });
-    });
-
+    mockGet();
     renderPage();
 
     await waitFor(() =>
@@ -100,26 +101,45 @@ describe('TicketDetailPage', () => {
     expect(screen.getByText('carol@example.com')).toBeInTheDocument();
   });
 
-  it('renders status and category badges', async () => {
-    mockedAxios.get = vi.fn().mockImplementation((url: string) => {
-      if (url.includes('/api/tickets/')) return Promise.resolve({ data: { ticket: mockTicketBase } });
-      return Promise.resolve({ data: { agents: mockAgents } });
-    });
-
+  it('renders current status in the Status select', async () => {
+    mockGet();
     renderPage();
 
     await waitFor(() =>
-      expect(screen.getByText(TicketStatus.OPEN)).toBeInTheDocument(),
+      expect(screen.getByRole('combobox', { name: /status/i })).toBeInTheDocument(),
     );
-    expect(screen.getByText('Technical Question')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /status/i })).toHaveTextContent(
+      TicketStatus.OPEN,
+    );
+  });
+
+  it('renders current category label in the Category select', async () => {
+    mockGet();
+    renderPage();
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('combobox', { name: /category/i }),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole('combobox', { name: /category/i }),
+    ).toHaveTextContent('Technical Question');
+  });
+
+  it('shows "Uncategorized" in the Category select when category is null', async () => {
+    mockGet({ ...mockTicketBase, category: null });
+    renderPage();
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('combobox', { name: /category/i }),
+      ).toHaveTextContent('Uncategorized'),
+    );
   });
 
   it('renders the ticket body text', async () => {
-    mockedAxios.get = vi.fn().mockImplementation((url: string) => {
-      if (url.includes('/api/tickets/')) return Promise.resolve({ data: { ticket: mockTicketBase } });
-      return Promise.resolve({ data: { agents: mockAgents } });
-    });
-
+    mockGet();
     renderPage();
 
     await waitFor(() =>
@@ -129,39 +149,33 @@ describe('TicketDetailPage', () => {
     );
   });
 
-  it('shows "Unassigned" when no agent is assigned', async () => {
-    mockedAxios.get = vi.fn().mockImplementation((url: string) => {
-      if (url.includes('/api/tickets/')) return Promise.resolve({ data: { ticket: mockTicketBase } });
-      return Promise.resolve({ data: { agents: mockAgents } });
-    });
-
+  it('shows "Unassigned" in the Assigned to select when no agent is assigned', async () => {
+    mockGet();
     renderPage();
 
     await waitFor(() =>
-      expect(screen.getByText('Unassigned')).toBeInTheDocument(),
+      expect(
+        screen.getByRole('combobox', { name: /assigned to/i }),
+      ).toHaveTextContent('Unassigned'),
     );
   });
 
-  it('shows the assigned agent name when the ticket has an assignee', async () => {
-    const assigned = { ...mockTicketBase, assignedTo: { id: 'agent-1', name: 'Alice Agent' } };
-    mockedAxios.get = vi.fn().mockImplementation((url: string) => {
-      if (url.includes('/api/tickets/')) return Promise.resolve({ data: { ticket: assigned } });
-      return Promise.resolve({ data: { agents: mockAgents } });
+  it('shows the assigned agent name in the Assigned to select', async () => {
+    mockGet({
+      ...mockTicketBase,
+      assignedTo: { id: 'agent-1', name: 'Alice Agent' },
     });
-
     renderPage();
 
     await waitFor(() =>
-      expect(screen.getByText('Alice Agent')).toBeInTheDocument(),
+      expect(
+        screen.getByRole('combobox', { name: /assigned to/i }),
+      ).toHaveTextContent('Alice Agent'),
     );
   });
 
   it('calls GET /api/tickets/:id and GET /api/agents with credentials', async () => {
-    mockedAxios.get = vi.fn().mockImplementation((url: string) => {
-      if (url.includes('/api/tickets/')) return Promise.resolve({ data: { ticket: mockTicketBase } });
-      return Promise.resolve({ data: { agents: mockAgents } });
-    });
-
+    mockGet();
     renderPage('42');
 
     await waitFor(() =>
@@ -176,21 +190,104 @@ describe('TicketDetailPage', () => {
     });
   });
 
-  it('calls PATCH /api/tickets/:id with the selected agent id', async () => {
+  it('calls PATCH with the new status when the Status select changes', async () => {
     const user = userEvent.setup();
-    mockedAxios.get = vi.fn().mockImplementation((url: string) => {
-      if (url.includes('/api/tickets/')) return Promise.resolve({ data: { ticket: mockTicketBase } });
-      return Promise.resolve({ data: { agents: mockAgents } });
-    });
+    mockGet();
     mockedAxios.patch = vi.fn().mockResolvedValue({});
 
     renderPage('42');
 
     await waitFor(() =>
-      expect(screen.getByText('Unassigned')).toBeInTheDocument(),
+      expect(screen.getByRole('combobox', { name: /status/i })).toBeInTheDocument(),
     );
 
-    await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByRole('combobox', { name: /status/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(TicketStatus.RESOLVED)).toBeInTheDocument(),
+    );
+
+    await user.click(screen.getByText(TicketStatus.RESOLVED));
+
+    await waitFor(() =>
+      expect(mockedAxios.patch).toHaveBeenCalledWith(
+        '/api/tickets/42',
+        { status: TicketStatus.RESOLVED },
+        { withCredentials: true },
+      ),
+    );
+  });
+
+  it('calls PATCH with the new category when the Category select changes', async () => {
+    const user = userEvent.setup();
+    mockGet();
+    mockedAxios.patch = vi.fn().mockResolvedValue({});
+
+    renderPage('42');
+
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument(),
+    );
+
+    await user.click(screen.getByRole('combobox', { name: /category/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText('Refund Request')).toBeInTheDocument(),
+    );
+
+    await user.click(screen.getByText('Refund Request'));
+
+    await waitFor(() =>
+      expect(mockedAxios.patch).toHaveBeenCalledWith(
+        '/api/tickets/42',
+        { category: TicketCategory.REFUND_REQUEST },
+        { withCredentials: true },
+      ),
+    );
+  });
+
+  it('calls PATCH with null category when "Uncategorized" is selected', async () => {
+    const user = userEvent.setup();
+    mockGet();
+    mockedAxios.patch = vi.fn().mockResolvedValue({});
+
+    renderPage('42');
+
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: /category/i })).toBeInTheDocument(),
+    );
+
+    await user.click(screen.getByRole('combobox', { name: /category/i }));
+
+    await waitFor(() =>
+      expect(screen.getAllByText('Uncategorized').length).toBeGreaterThan(0),
+    );
+
+    await user.click(screen.getAllByText('Uncategorized')[0]);
+
+    await waitFor(() =>
+      expect(mockedAxios.patch).toHaveBeenCalledWith(
+        '/api/tickets/42',
+        { category: null },
+        { withCredentials: true },
+      ),
+    );
+  });
+
+  it('calls PATCH with the selected agent id when the Assigned to select changes', async () => {
+    const user = userEvent.setup();
+    mockGet();
+    mockedAxios.patch = vi.fn().mockResolvedValue({});
+
+    renderPage('42');
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('combobox', { name: /assigned to/i }),
+      ).toBeInTheDocument(),
+    );
+
+    await user.click(screen.getByRole('combobox', { name: /assigned to/i }));
 
     await waitFor(() =>
       expect(screen.getByText('Alice Agent')).toBeInTheDocument(),
@@ -209,26 +306,27 @@ describe('TicketDetailPage', () => {
 
   it('calls PATCH with null when "Unassigned" is selected', async () => {
     const user = userEvent.setup();
-    const assigned = { ...mockTicketBase, assignedTo: { id: 'agent-1', name: 'Alice Agent' } };
-    mockedAxios.get = vi.fn().mockImplementation((url: string) => {
-      if (url.includes('/api/tickets/')) return Promise.resolve({ data: { ticket: assigned } });
-      return Promise.resolve({ data: { agents: mockAgents } });
+    mockGet({
+      ...mockTicketBase,
+      assignedTo: { id: 'agent-1', name: 'Alice Agent' },
     });
     mockedAxios.patch = vi.fn().mockResolvedValue({});
 
     renderPage('42');
 
     await waitFor(() =>
-      expect(screen.getByText('Alice Agent')).toBeInTheDocument(),
+      expect(
+        screen.getByRole('combobox', { name: /assigned to/i }),
+      ).toHaveTextContent('Alice Agent'),
     );
 
-    await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByRole('combobox', { name: /assigned to/i }));
 
     await waitFor(() =>
-      expect(screen.getAllByText('Unassigned').length).toBeGreaterThan(0),
+      expect(screen.getByText('Unassigned')).toBeInTheDocument(),
     );
 
-    await user.click(screen.getAllByText('Unassigned')[0]);
+    await user.click(screen.getByText('Unassigned'));
 
     await waitFor(() =>
       expect(mockedAxios.patch).toHaveBeenCalledWith(
