@@ -97,6 +97,17 @@ export const updateTicketSchema = z.object({
 
 export type UpdateTicketData = z.infer<typeof updateTicketSchema>;
 
+export type TicketsPerDay = { date: string; count: number };
+
+export type DashboardStats = {
+  totalTickets: number;
+  openTickets: number;
+  aiResolvedTickets: number;
+  aiResolvedPercentage: number;
+  averageResolutionTimeMs: number | null;
+  ticketsPerDay: TicketsPerDay[];
+};
+
 export const sendgridInboundSchema = z.object({
   from: z.string(),
   subject: z.string(),

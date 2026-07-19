@@ -7,6 +7,7 @@ import {
   createReplySchema,
   ReplyAuthorType,
   TicketStatus,
+  type DashboardStats,
 } from '@helpdesk/core';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
@@ -73,6 +74,14 @@ router.get('/', requireAuth, async (req, res) => {
   ]);
 
   res.json({ tickets, total });
+});
+
+router.get('/stats', requireAuth, async (_req, res) => {
+  const [{ stats }] = await prisma.$queryRaw<[{ stats: DashboardStats }]>`
+    SELECT get_dashboard_stats() AS stats
+  `;
+
+  res.json({ stats });
 });
 
 router.get('/:id', requireAuth, async (req, res) => {
