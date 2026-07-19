@@ -22,6 +22,14 @@ const customerReply: TicketReply = {
   createdAt: "2024-01-15T12:00:00.000Z",
 };
 
+const aiReply: TicketReply = {
+  id: 3,
+  body: "AI reply body",
+  authorType: ReplyAuthorType.AI,
+  author: null,
+  createdAt: "2024-01-15T13:00:00.000Z",
+};
+
 describe("ReplyThread", () => {
   it("renders nothing when there are no replies", () => {
     const { container } = render(
@@ -76,6 +84,12 @@ describe("ReplyThread", () => {
     );
 
     expect(screen.getByText(CUSTOMER_NAME)).toBeInTheDocument();
+  });
+
+  it("shows 'AI Assistant' for an AI reply", () => {
+    render(<ReplyThread replies={[aiReply]} customerName={CUSTOMER_NAME} />);
+
+    expect(screen.getByText("AI Assistant")).toBeInTheDocument();
   });
 
   it("renders the formatted timestamp for each reply", () => {

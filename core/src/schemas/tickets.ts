@@ -7,10 +7,18 @@ export enum TicketCategory {
 }
 
 export enum TicketStatus {
+  NEW = 'NEW',
+  PROCESSING = 'PROCESSING',
   OPEN = 'OPEN',
   RESOLVED = 'RESOLVED',
   CLOSED = 'CLOSED',
 }
+
+export const MANUAL_TICKET_STATUSES = [
+  TicketStatus.OPEN,
+  TicketStatus.RESOLVED,
+  TicketStatus.CLOSED,
+] as const;
 
 export enum TicketSortBy {
   SUBJECT = 'subject',
@@ -42,6 +50,7 @@ export type TicketDetail = Ticket & {
 export enum ReplyAuthorType {
   AGENT = 'AGENT',
   CUSTOMER = 'CUSTOMER',
+  AI = 'AI',
 }
 
 export type TicketReply = {
@@ -82,7 +91,7 @@ export type TicketQueryData = z.infer<typeof ticketQuerySchema>;
 
 export const updateTicketSchema = z.object({
   assignedToId: z.string().nullable().optional(),
-  status: z.enum(TicketStatus).optional(),
+  status: z.enum(MANUAL_TICKET_STATUSES).optional(),
   category: z.enum(TicketCategory).nullable().optional(),
 });
 

@@ -3,13 +3,15 @@ import { type TicketReply, ReplyAuthorType } from '@helpdesk/core';
 type Props = {
   reply: TicketReply;
   customerName: string;
-}
+};
 
 export default function ReplyItem({ reply, customerName }: Props) {
   const authorName =
     reply.authorType === ReplyAuthorType.CUSTOMER
       ? customerName
-      : reply.author?.name;
+      : reply.authorType === ReplyAuthorType.AI
+        ? 'AI Assistant'
+        : reply.author?.name;
 
   return (
     <div className='rounded-md border p-4 space-y-1 text-sm'>

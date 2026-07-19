@@ -6,6 +6,7 @@ import {
   updateTicketSchema,
   createReplySchema,
   ReplyAuthorType,
+  TicketStatus,
 } from '@helpdesk/core';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
@@ -30,7 +31,9 @@ router.get('/', requireAuth, async (req, res) => {
   const searchTerm = search?.trim();
 
   const where = {
-    ...(status && { status }),
+    ...(status
+      ? { status }
+      : { status: { notIn: [TicketStatus.NEW, TicketStatus.PROCESSING] } }),
     ...(category === 'NONE'
       ? { category: null }
       : category

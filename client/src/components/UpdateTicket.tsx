@@ -4,8 +4,8 @@ import {
   type TicketDetail,
   type UpdateTicketData,
   type Agent,
-  TicketStatus,
   TicketCategory,
+  MANUAL_TICKET_STATUSES,
 } from '@helpdesk/core';
 import TicketSelectField from '@/components/TicketSelectField';
 import { CATEGORY_LABEL, STATUS_LABEL } from '@/components/ticketColumns';
@@ -13,7 +13,7 @@ import { CATEGORY_LABEL, STATUS_LABEL } from '@/components/ticketColumns';
 const UNASSIGNED = 'unassigned';
 const NO_CATEGORY = 'none';
 
-const STATUS_OPTIONS = Object.values(TicketStatus).map((s) => ({
+const STATUS_OPTIONS = MANUAL_TICKET_STATUSES.map((s) => ({
   value: s,
   label: STATUS_LABEL[s],
 }));
@@ -51,7 +51,9 @@ export default function UpdateTicket({ ticket, agents }: Props) {
       <TicketSelectField
         label='Status'
         value={ticket.status}
-        onValueChange={(val) => update({ status: val as TicketStatus })}
+        onValueChange={(val) =>
+          update({ status: val as UpdateTicketData['status'] })
+        }
         options={STATUS_OPTIONS}
         disabled={isUpdating}
       />

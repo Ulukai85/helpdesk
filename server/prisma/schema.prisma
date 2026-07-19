@@ -21,6 +21,8 @@ enum TicketCategory {
 }
 
 enum TicketStatus {
+  NEW
+  PROCESSING
   OPEN
   RESOLVED
   CLOSED
@@ -29,6 +31,7 @@ enum TicketStatus {
 enum ReplyAuthorType {
   AGENT
   CUSTOMER
+  AI
 }
 
 // ─── Models ──────────────────────────────────────────────────────────────────
@@ -95,7 +98,7 @@ model Ticket {
   customerName  String
   customerEmail String
   category      TicketCategory?
-  status        TicketStatus    @default(OPEN)
+  status        TicketStatus    @default(NEW)
   assignedToId  String?
   assignedTo    User?           @relation(fields: [assignedToId], references: [id])
   createdAt     DateTime        @default(now())

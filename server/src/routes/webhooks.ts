@@ -4,6 +4,7 @@ import { sendgridInboundSchema } from '@helpdesk/core';
 import { prisma } from '../lib/prisma';
 import { requireWebhookToken } from '../middleware/requireWebhookToken';
 import { classifyTicket } from '../lib/classifyTicket';
+import { resolveTicket } from '../lib/resolveTicket';
 
 const router = Router();
 
@@ -64,6 +65,7 @@ router.post(
     });
 
     await classifyTicket(ticket);
+    await resolveTicket(ticket);
 
     res.status(200).json({ id: ticket.id });
   },
