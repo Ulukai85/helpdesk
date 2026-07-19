@@ -89,25 +89,25 @@ test.describe('Ticket detail page', () => {
     await page.goto(`/tickets/${id}`);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
-    await test.step('change status to RESOLVED', async () => {
+    await test.step('change status to Resolved', async () => {
       // The SelectTrigger renders with aria-label matching the label prop
       await page.getByRole('combobox', { name: 'Status' }).click();
-      await page.getByRole('option', { name: 'RESOLVED' }).click();
+      await page.getByRole('option', { name: 'Resolved' }).click();
     });
 
     await test.step('wait for the mutation to settle', async () => {
-      // The trigger should now display the new value
+      // The trigger should now display the new value (STATUS_LABEL, not the raw enum)
       await expect(
         page.getByRole('combobox', { name: 'Status' })
-      ).toContainText('RESOLVED');
+      ).toContainText('Resolved');
     });
 
-    await test.step('reload and verify the status is still RESOLVED', async () => {
+    await test.step('reload and verify the status is still Resolved', async () => {
       await page.reload();
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       await expect(
         page.getByRole('combobox', { name: 'Status' })
-      ).toContainText('RESOLVED');
+      ).toContainText('Resolved');
     });
   });
 
