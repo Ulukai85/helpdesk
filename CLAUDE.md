@@ -66,6 +66,16 @@ Prisma client is generated to `server/src/generated/prisma` (non-default path). 
 
 **Seed:** `server/prisma/seed.ts` — creates the initial admin user (credentials from `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars).
 
+## Background Jobs (pg-boss)
+
+Async work that shouldn't block a request (e.g. AI calls) runs through **pg-boss**, a Postgres-backed job queue — not raw fire-and-forget promises. It uses the same `DATABASE_URL` as Prisma but keeps its own `pgboss` schema, so `prisma migrate reset` (which only touches `public`) never disturbs it.
+
+- Each queue gets its own module in `server/src/lib/` (e.g. `classifyTicket.ts`) that owns: the `PgBoss` instance, a module-level queue-name constant, a `start<Thing>Worker()` function (`boss.start()` → `boss.createQueue()` → `boss.work()`), and a producer function with the same name as the job (e.g. `classifyTicket(ticket)`) that just calls `boss.send()` and returns the job id
+- Import `PgBoss` as a **named export**: `import { PgBoss } from 'pg-boss'` (no default export)
+- Register each queue's worker by calling its `start<Thing>Worker()` from `server/src/index.ts` before `app.listen()`
+- Producer functions are cheap (a single DB insert) — **await them** at the call site rather than treating them as fire-and-forget; this guarantees the job is durably queued before the request completes, while the actual slow work still happens out-of-band in the worker
+- Configure `retryLimit` / `retryBackoff` on `createQueue()` instead of hand-rolling retry logic
+
 ## Security Middleware
 
 Applied in `server/src/index.ts` in this order:

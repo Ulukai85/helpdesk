@@ -6,6 +6,7 @@ import { toNodeHandler } from 'better-auth/node';
 import { auth } from './auth';
 import { prisma } from './lib/prisma';
 import { requireAuth } from './middleware/requireAuth';
+import { startClassifyTicketWorker } from './lib/classifyTicket';
 import usersRouter from './routes/users';
 import ticketsRouter from './routes/tickets';
 import agentsRouter from './routes/agents';
@@ -70,6 +71,11 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
         ? 'Internal server error'
         : err.message,
   });
+});
+
+startClassifyTicketWorker().catch((err) => {
+  console.error('Failed to start classify-ticket worker', err);
+  process.exit(1);
 });
 
 app.listen(PORT, () => {

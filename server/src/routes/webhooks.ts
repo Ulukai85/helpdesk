@@ -63,7 +63,7 @@ router.post(
       data: { subject: subject.trim(), body, customerName, customerEmail },
     });
 
-    classifyTicket(ticket);
+    await classifyTicket(ticket);
 
     res.status(200).json({ id: ticket.id });
   },
