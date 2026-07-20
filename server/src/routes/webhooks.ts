@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { sendgridInboundSchema } from '@helpdesk/core';
+import Parse from '@sendgrid/inbound-mail-parser';
+import { sendgridInboundSchema, ReplyAuthorType } from '@helpdesk/core';
 import { prisma } from '../lib/prisma';
 import { requireWebhookToken } from '../middleware/requireWebhookToken';
 import { classifyTicket } from '../lib/classifyTicket';
@@ -36,7 +37,19 @@ router.post(
   requireWebhookToken,
   upload.none(),
   async (req, res) => {
-    const parsed = sendgridInboundSchema.safeParse(req.body);
+    const parser = new Parse(
+      { keys: ['from', 'subject', 'text', 'html'] },
+      { body: req.body },
+    );
+    // keyValues() reduces over the matched keys with no initial value, so it
+    // throws when none of the configured keys are present in the payload.
+    let payload: Record<string, unknown>;
+    try {
+      payload = parser.keyValues();
+    } catch {
+      payload = {};
+    }
+    const parsed = sendgridInboundSchema.safeParse(payload);
     if (!parsed.success) {
       res.status(200).json({});
       return;
@@ -53,7 +66,7 @@ router.post(
       });
       if (existing) {
         await prisma.ticketReply.create({
-          data: { ticketId: existing.id, authorType: 'CUSTOMER', body },
+          data: { ticketId: existing.id, authorType: ReplyAuthorType.CUSTOMER, body },
         });
         res.status(200).json({ id: existing.id });
         return;

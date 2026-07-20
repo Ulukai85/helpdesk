@@ -13,8 +13,7 @@ async function createTicket(
   request: APIRequestContext,
   overrides?: { subject?: string; from?: string; text?: string }
 ): Promise<number> {
-  const res = await request.post(WEBHOOK_URL, {
-    headers: { 'X-Webhook-Token': VALID_TOKEN },
+  const res = await request.post(`${WEBHOOK_URL}?token=${VALID_TOKEN}`, {
     multipart: {
       from: overrides?.from ?? 'Jane Doe <jane@example.com>',
       subject: overrides?.subject ?? `Test ticket ${Date.now()}`,

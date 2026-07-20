@@ -8,6 +8,7 @@ import { prisma } from './lib/prisma';
 import { requireAuth } from './middleware/requireAuth';
 import { startClassifyTicketWorker } from './lib/classifyTicket';
 import { startResolveTicketWorker } from './lib/resolveTicket';
+import { startSendTicketReplyEmailWorker } from './lib/sendTicketReplyEmail';
 import usersRouter from './routes/users';
 import ticketsRouter from './routes/tickets';
 import agentsRouter from './routes/agents';
@@ -81,6 +82,11 @@ startClassifyTicketWorker().catch((err) => {
 
 startResolveTicketWorker().catch((err) => {
   console.error('Failed to start resolve-ticket worker', err);
+  process.exit(1);
+});
+
+startSendTicketReplyEmailWorker().catch((err) => {
+  console.error('Failed to start send-ticket-reply-email worker', err);
   process.exit(1);
 });
 

@@ -27,8 +27,7 @@ test.describe('POST /api/webhooks/inbound-email — happy paths', () => {
   test('text body: creates a ticket and returns { id }', async ({
     request,
   }) => {
-    const response = await request.post(WEBHOOK_URL, {
-      headers: { 'X-Webhook-Token': VALID_TOKEN },
+    const response = await request.post(`${WEBHOOK_URL}?token=${VALID_TOKEN}`, {
       multipart: validPayload(),
     });
 
@@ -41,8 +40,7 @@ test.describe('POST /api/webhooks/inbound-email — happy paths', () => {
     request,
   }) => {
     // When `text` is absent, the server strips HTML tags and uses that as the body.
-    const response = await request.post(WEBHOOK_URL, {
-      headers: { 'X-Webhook-Token': VALID_TOKEN },
+    const response = await request.post(`${WEBHOOK_URL}?token=${VALID_TOKEN}`, {
       multipart: {
         from: 'Jane Doe <jane@example.com>',
         subject: 'HTML-only email',
@@ -59,8 +57,7 @@ test.describe('POST /api/webhooks/inbound-email — happy paths', () => {
     request,
   }) => {
     // "jane@example.com" — no angle brackets; server derives customerName from the email prefix.
-    const response = await request.post(WEBHOOK_URL, {
-      headers: { 'X-Webhook-Token': VALID_TOKEN },
+    const response = await request.post(`${WEBHOOK_URL}?token=${VALID_TOKEN}`, {
       multipart: validPayload({ from: 'jane@example.com' }),
     });
 
@@ -74,12 +71,10 @@ test.describe('POST /api/webhooks/inbound-email — happy paths', () => {
   }) => {
     // Sanity check that two calls create two distinct tickets, not the same one.
     const [r1, r2] = await Promise.all([
-      request.post(WEBHOOK_URL, {
-        headers: { 'X-Webhook-Token': VALID_TOKEN },
+      request.post(`${WEBHOOK_URL}?token=${VALID_TOKEN}`, {
         multipart: validPayload({ subject: 'Ticket A' }),
       }),
-      request.post(WEBHOOK_URL, {
-        headers: { 'X-Webhook-Token': VALID_TOKEN },
+      request.post(`${WEBHOOK_URL}?token=${VALID_TOKEN}`, {
         multipart: validPayload({ subject: 'Ticket B' }),
       }),
     ]);
@@ -97,8 +92,7 @@ test.describe('POST /api/webhooks/inbound-email — token validation', () => {
   test('wrong token: responds 200 {} without creating a ticket', async ({
     request,
   }) => {
-    const response = await request.post(WEBHOOK_URL, {
-      headers: { 'X-Webhook-Token': 'wrong-secret' },
+    const response = await request.post(`${WEBHOOK_URL}?token=wrong-secret`, {
       multipart: validPayload(),
     });
 
@@ -112,7 +106,7 @@ test.describe('POST /api/webhooks/inbound-email — token validation', () => {
     request,
   }) => {
     const response = await request.post(WEBHOOK_URL, {
-      // No X-Webhook-Token header at all
+      // No token query param at all
       multipart: validPayload(),
     });
 
@@ -128,8 +122,7 @@ test.describe('POST /api/webhooks/inbound-email — token validation', () => {
 
 test.describe('POST /api/webhooks/inbound-email — payload validation', () => {
   test('missing `from` field: responds 200 {}', async ({ request }) => {
-    const response = await request.post(WEBHOOK_URL, {
-      headers: { 'X-Webhook-Token': VALID_TOKEN },
+    const response = await request.post(`${WEBHOOK_URL}?token=${VALID_TOKEN}`, {
       multipart: {
         subject: 'No sender',
         text: 'Body text',
@@ -142,8 +135,7 @@ test.describe('POST /api/webhooks/inbound-email — payload validation', () => {
   });
 
   test('missing `subject` field: responds 200 {}', async ({ request }) => {
-    const response = await request.post(WEBHOOK_URL, {
-      headers: { 'X-Webhook-Token': VALID_TOKEN },
+    const response = await request.post(`${WEBHOOK_URL}?token=${VALID_TOKEN}`, {
       multipart: {
         from: 'Jane Doe <jane@example.com>',
         text: 'Body text',
@@ -156,8 +148,7 @@ test.describe('POST /api/webhooks/inbound-email — payload validation', () => {
   });
 
   test('completely empty payload: responds 200 {}', async ({ request }) => {
-    const response = await request.post(WEBHOOK_URL, {
-      headers: { 'X-Webhook-Token': VALID_TOKEN },
+    const response = await request.post(`${WEBHOOK_URL}?token=${VALID_TOKEN}`, {
       multipart: {},
     });
 

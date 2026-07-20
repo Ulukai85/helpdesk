@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { timingSafeEqual } from 'crypto';
 
+// SendGrid's Inbound Parse webhook settings only accept a target URL — there is
+// no way to configure custom request headers — so the shared secret must travel
+// as a query parameter on that URL instead of a header.
 export function requireWebhookToken(
   req: Request,
   res: Response,
@@ -18,7 +21,7 @@ export function requireWebhookToken(
     return;
   }
 
-  const token = req.headers['x-webhook-token'];
+  const token = req.query.token;
   if (typeof token !== 'string') {
     res.status(200).json({});
     return;

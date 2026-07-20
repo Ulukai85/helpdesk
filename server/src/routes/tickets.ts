@@ -11,6 +11,7 @@ import {
 } from '@helpdesk/core';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
+import { sendTicketReplyEmail } from '../lib/sendTicketReplyEmail';
 
 const router = Router();
 
@@ -226,6 +227,13 @@ router.post('/:id/replies', requireAuth, async (req, res) => {
       author: { select: { id: true, name: true } },
       createdAt: true,
     },
+  });
+
+  await sendTicketReplyEmail({
+    ticketId: ticket.id,
+    ticketSubject: ticket.subject,
+    customerEmail: ticket.customerEmail,
+    replyBody: reply.body,
   });
 
   res.status(201).json({ reply });

@@ -6,6 +6,7 @@ import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { TicketStatus, ReplyAuthorType } from '@helpdesk/core';
 import { prisma } from './prisma';
+import { sendTicketReplyEmail } from './sendTicketReplyEmail';
 
 const RESOLVE_TICKET_QUEUE = 'resolve-ticket';
 
@@ -19,7 +20,13 @@ const resolutionSchema = z.object({
   reply: z.string(),
 });
 
-type Ticket = { id: number; subject: string; body: string; customerName: string };
+type Ticket = {
+  id: number;
+  subject: string;
+  body: string;
+  customerName: string;
+  customerEmail: string;
+};
 
 export const boss = new PgBoss({ connectionString: process.env.DATABASE_URL });
 boss.on('error', console.error);
@@ -34,7 +41,7 @@ export async function startResolveTicketWorker(): Promise<void> {
   });
 
   await boss.work<Ticket>(RESOLVE_TICKET_QUEUE, async ([job]) => {
-    const { id, subject, body, customerName } = job.data;
+    const { id, subject, body, customerName, customerEmail } = job.data;
 
     await prisma.ticket.update({
       where: { id },
@@ -80,6 +87,13 @@ Ticket Message: ${body}`,
             data: { status: TicketStatus.RESOLVED },
           }),
         ]);
+
+        await sendTicketReplyEmail({
+          ticketId: id,
+          ticketSubject: subject,
+          customerEmail,
+          replyBody: output.reply,
+        });
       } else {
         await prisma.ticket.update({
           where: { id },
