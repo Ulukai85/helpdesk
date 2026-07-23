@@ -51,8 +51,6 @@ export default function TicketDetailPage() {
     enabled: !!id,
   });
 
-  throw new Error('CLIENT ERROR SENTRY TEST');
-
   return (
     <div className='p-8 space-y-6'>
       <Link

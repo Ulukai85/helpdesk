@@ -1,1 +1,2 @@
-- [Security Audit #1 — Initial Review](audit-1-findings.md) — First full security audit; key patterns, controls confirmed, and open risks recorded
+- [Security Audit #1 — Initial Review](audit-1-findings.md) — First full security audit (auth scaffolding only, no ticket routes yet); superseded in part by audit-2
+- [Security Audit #2 — Full App Review](audit-2-findings.md) — 2026-07-23: tickets/users/webhooks/agents routes + AI queues reviewed. Confirms audit-1 open risks fixed (/api/me trimmed). New open findings: inbound webhook has no SPF/DKIM check (reply injection/impersonation risk), prompt injection into AI ticket features. Read this before re-auditing.

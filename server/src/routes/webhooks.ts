@@ -32,13 +32,21 @@ function extractTicketId(subject: string): number | null {
   return match ? parseInt(match[1]) : null;
 }
 
+// SendGrid reports per-domain DKIM results as e.g. "{@domain.com : pass}" —
+// there is no signed proof the "From" header itself is genuine, so a reply
+// is only trusted enough to attach to an existing ticket thread when SPF or
+// DKIM confirms the sending server was authorized for the claimed domain.
+function isVerifiedSender(spf: string, dkim: string): boolean {
+  return spf.trim().toLowerCase() === 'pass' || /:\s*pass\b/i.test(dkim);
+}
+
 router.post(
   '/inbound-email',
   requireWebhookToken,
   upload.none(),
   async (req, res) => {
     const parser = new Parse(
-      { keys: ['from', 'subject', 'text', 'html'] },
+      { keys: ['from', 'subject', 'text', 'html', 'spf', 'dkim'] },
       { body: req.body },
     );
     // keyValues() reduces over the matched keys with no initial value, so it
@@ -55,12 +63,12 @@ router.post(
       return;
     }
 
-    const { from, subject, text, html } = parsed.data;
+    const { from, subject, text, html, spf, dkim } = parsed.data;
     const { name: customerName, email: customerEmail } = parseFrom(from);
     const body = extractBody(text, html);
 
     const ticketId = extractTicketId(subject);
-    if (ticketId !== null) {
+    if (ticketId !== null && isVerifiedSender(spf, dkim)) {
       const existing = await prisma.ticket.findFirst({
         where: { id: ticketId, customerEmail },
       });

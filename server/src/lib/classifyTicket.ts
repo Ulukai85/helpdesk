@@ -5,6 +5,7 @@ import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { TicketCategory } from '@helpdesk/core';
 import { prisma } from './prisma';
+import { UNTRUSTED_CONTENT_NOTICE, wrapUntrusted } from './aiPromptSafety';
 
 const CLASSIFY_TICKET_QUEUE = 'classify-ticket';
 
@@ -37,8 +38,9 @@ Categories:
 - TECHNICAL_QUESTION: technical issues, bugs, or how-to questions about the product
 - REFUND_REQUEST: requests for a refund, cancellation, or billing dispute
 
-Subject: ${job.data.subject}
-Message: ${job.data.body}`,
+${UNTRUSTED_CONTENT_NOTICE}
+
+${wrapUntrusted(`Subject: ${job.data.subject}\nMessage: ${job.data.body}`)}`,
       });
 
       await prisma.ticket.update({

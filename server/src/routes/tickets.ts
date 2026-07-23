@@ -12,6 +12,7 @@ import {
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
 import { sendTicketReplyEmail } from '../lib/sendTicketReplyEmail';
+import { UNTRUSTED_CONTENT_NOTICE, wrapUntrusted } from '../lib/aiPromptSafety';
 
 const router = Router();
 
@@ -282,9 +283,9 @@ router.post('/:id/summarize', requireAuth, async (req, res) => {
     model: openai('gpt-5-nano'),
     prompt: `You are a helpdesk assistant. Summarize the following support ticket and its conversation history in 2–4 concise sentences. Focus on the customer's issue and any resolution or current status.
 
-Subject: ${ticket.subject}
-Customer: ${ticket.customerName}
-Message: ${ticket.body}${conversationSection}`,
+${UNTRUSTED_CONTENT_NOTICE}
+
+${wrapUntrusted(`Subject: ${ticket.subject}\nCustomer: ${ticket.customerName}\nMessage: ${ticket.body}${conversationSection}`)}`,
   });
 
   res.json({ summary: text });
@@ -316,10 +317,11 @@ router.post('/:id/polish-reply', requireAuth, async (req, res) => {
     model: openai('gpt-5-nano'),
     prompt: `You are a customer support agent. Improve the following draft reply to make it more professional, clear, and helpful. Preserve the original intent and information. Return only the improved reply text with no extra commentary.
 
-Ticket subject: ${ticket.subject}
-Customer message: ${ticket.body}
+${UNTRUSTED_CONTENT_NOTICE}
 
-Draft reply:
+${wrapUntrusted(`Ticket subject: ${ticket.subject}\nCustomer message: ${ticket.body}`)}
+
+Draft reply (written by the agent — this is the text to improve):
 ${parsed.data.body}`,
   });
 

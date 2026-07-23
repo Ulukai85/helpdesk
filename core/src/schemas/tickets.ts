@@ -113,6 +113,8 @@ export const sendgridInboundSchema = z.object({
   subject: z.string(),
   text: z.string().optional().default(''),
   html: z.string().optional().default(''),
+  spf: z.string().optional().default(''),
+  dkim: z.string().optional().default(''),
 });
 
 export type SendgridInboundData = z.infer<typeof sendgridInboundSchema>;
