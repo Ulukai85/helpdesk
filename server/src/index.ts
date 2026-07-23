@@ -1,5 +1,6 @@
 import './instrument';
 
+import path from 'node:path';
 import express, { NextFunction, Request, Response } from 'express';
 import * as Sentry from '@sentry/node';
 import helmet from 'helmet';
@@ -66,6 +67,16 @@ app.use('/api/users', usersRouter);
 app.use('/api/tickets', ticketsRouter);
 app.use('/api/agents', agentsRouter);
 app.use('/api/webhooks', webhooksRouter);
+
+if (process.env.NODE_ENV === 'production') {
+  const clientDist = path.join(import.meta.dirname, '../../client/dist');
+  app.use(express.static(clientDist));
+  // SPA fallback for client-side routing — excludes /api so unmatched API
+  // routes still 404 as JSON instead of returning index.html.
+  app.get(/^(?!\/api\/).*/, (_req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
 
 Sentry.setupExpressErrorHandler(app);
 

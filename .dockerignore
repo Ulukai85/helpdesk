@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+**/dist
+.git
+.env
+.env.local
+**/.env
+**/.env.test
+**/.env.local
+*.tsbuildinfo
+e2e
+playwright-report
+playwright
+.claude
+.agents
