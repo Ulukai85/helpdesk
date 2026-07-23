@@ -25,4 +25,4 @@ ENV NODE_ENV=production
 EXPOSE 3000
 
 # `migrate deploy` only applies pending migrations — safe to run on every boot.
-CMD ["sh", "-c", "bun run --cwd server migrate:deploy && bun run --cwd server start"]
+CMD ["sh", "-c", "bun run --cwd server migrate:deploy && bun run --cwd server seed && bun run --cwd server start"]
