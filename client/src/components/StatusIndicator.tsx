@@ -2,8 +2,6 @@ import { TicketStatus } from '@helpdesk/core';
 import { cn } from '@/lib/utils';
 
 const PIPELINE = [
-  TicketStatus.NEW,
-  TicketStatus.PROCESSING,
   TicketStatus.OPEN,
   TicketStatus.RESOLVED,
   TicketStatus.CLOSED,
