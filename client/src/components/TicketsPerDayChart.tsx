@@ -40,9 +40,9 @@ export default function TicketsPerDayChart() {
         {error ? (
           <p className='text-sm text-destructive'>Failed to load chart data.</p>
         ) : isPending ? (
-          <Skeleton className='aspect-video w-full' />
+          <Skeleton className='h-64 w-full' />
         ) : (
-          <ChartContainer config={chartConfig} className='w-full'>
+          <ChartContainer config={chartConfig} className='aspect-auto h-64 w-full'>
             <BarChart data={data.ticketsPerDay}>
               <CartesianGrid vertical={false} />
               <XAxis

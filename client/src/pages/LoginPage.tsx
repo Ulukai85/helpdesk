@@ -37,10 +37,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-muted/40'>
+    <div className='min-h-screen flex flex-col items-center justify-center gap-6 bg-background'>
+      <div className='flex items-center gap-2.5'>
+        <div className='flex h-8 w-8 items-center justify-center rounded-md bg-primary'>
+          <span className='h-2 w-2 rounded-full bg-background' />
+        </div>
+        <span className='font-heading text-lg font-semibold tracking-wide'>
+          Helpdesk
+        </span>
+      </div>
       <Card className='w-full max-w-sm'>
         <CardHeader>
-          <CardTitle className='text-2xl'>Sign in</CardTitle>
+          <CardTitle className='font-heading text-2xl'>Sign in</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>

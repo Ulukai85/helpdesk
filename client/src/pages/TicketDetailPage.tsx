@@ -14,6 +14,8 @@ import UpdateTicket from '@/components/UpdateTicket';
 import ReplyThread from '@/components/ReplyThread';
 import ReplyForm from '@/components/ReplyForm';
 import TicketSummary from '@/components/TicketSummary';
+import StatusIndicator from '@/components/StatusIndicator';
+import { STATUS_LABEL } from '@/components/TicketColumns';
 import { cn } from '@/lib/utils';
 import { ArrowLeft } from 'lucide-react';
 
@@ -65,8 +67,17 @@ export default function TicketDetailPage() {
       ) : (
         <div className='space-y-4'>
           <div className='space-y-1'>
-            <h1 className='text-2xl font-bold'>{data.subject}</h1>
-            <p className='text-sm text-muted-foreground'>
+            <div className='flex flex-wrap items-center gap-4'>
+              <h1 className='font-heading text-2xl font-bold'>
+                {data.subject}
+              </h1>
+              <StatusIndicator
+                status={data.status}
+                label={STATUS_LABEL[data.status]}
+                className='mt-1'
+              />
+            </div>
+            <p className='font-mono text-sm text-muted-foreground'>
               #{data.id} &middot; opened{' '}
               {new Date(data.createdAt).toLocaleString()}
             </p>

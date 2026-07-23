@@ -1,4 +1,5 @@
 import { type TicketReply, ReplyAuthorType } from '@helpdesk/core';
+import { cn } from '@/lib/utils';
 
 type Props = {
   reply: TicketReply;
@@ -6,18 +7,24 @@ type Props = {
 };
 
 export default function ReplyItem({ reply, customerName }: Props) {
-  const authorName =
-    reply.authorType === ReplyAuthorType.CUSTOMER
+  const isAi = reply.authorType === ReplyAuthorType.AI;
+  const authorName = isAi
+    ? 'AI Assistant'
+    : reply.authorType === ReplyAuthorType.CUSTOMER
       ? customerName
-      : reply.authorType === ReplyAuthorType.AI
-        ? 'AI Assistant'
-        : reply.author?.name;
+      : reply.author?.name;
 
   return (
-    <div className='rounded-md border p-4 space-y-1 text-sm'>
+    <div
+      className={cn(
+        'rounded-md border p-4 space-y-1 text-sm',
+        isAi && 'border-l-2 border-l-signal-teal',
+      )}>
       <div className='flex items-center gap-2'>
-        <span className='font-medium'>{authorName}</span>
-        <span className='text-muted-foreground'>
+        <span className={cn('font-medium', isAi && 'text-signal-teal')}>
+          {authorName}
+        </span>
+        <span className='font-mono text-xs text-muted-foreground'>
           {new Date(reply.createdAt).toLocaleString()}
         </span>
       </div>

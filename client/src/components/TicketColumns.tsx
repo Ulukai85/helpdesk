@@ -2,17 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { Link } from 'react-router';
 import { type Ticket, TicketCategory, TicketStatus } from '@helpdesk/core';
 import { Badge } from '@/components/ui/badge';
-
-export const STATUS_VARIANT: Record<
-  TicketStatus,
-  'default' | 'secondary' | 'outline'
-> = {
-  [TicketStatus.NEW]: 'outline',
-  [TicketStatus.PROCESSING]: 'secondary',
-  [TicketStatus.OPEN]: 'default',
-  [TicketStatus.RESOLVED]: 'secondary',
-  [TicketStatus.CLOSED]: 'outline',
-};
+import StatusIndicator from '@/components/StatusIndicator';
 
 export const STATUS_LABEL: Record<TicketStatus, string> = {
   [TicketStatus.NEW]: 'New',
@@ -55,20 +45,29 @@ export const ticketColumns = [
   columnHelper.accessor('status', {
     header: 'Status',
     cell: (info) => (
-      <Badge variant={STATUS_VARIANT[info.getValue()]}>
-        {STATUS_LABEL[info.getValue()]}
-      </Badge>
+      <StatusIndicator
+        status={info.getValue()}
+        label={STATUS_LABEL[info.getValue()]}
+      />
     ),
   }),
   columnHelper.accessor('category', {
     header: 'Category',
     cell: (info) => {
       const category = info.getValue();
-      return category ? CATEGORY_LABEL[category] : '—';
+      return category ? (
+        <Badge variant='outline'>{CATEGORY_LABEL[category]}</Badge>
+      ) : (
+        <span className='text-muted-foreground'>—</span>
+      );
     },
   }),
   columnHelper.accessor('createdAt', {
     header: 'Created',
-    cell: (info) => new Date(info.getValue()).toLocaleDateString(),
+    cell: (info) => (
+      <span className='font-mono text-xs text-muted-foreground'>
+        {new Date(info.getValue()).toLocaleDateString()}
+      </span>
+    ),
   }),
 ];

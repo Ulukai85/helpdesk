@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Helpdesk</title>
+    <script>
+      (function () {
+        var stored = localStorage.getItem('helpdesk-theme');
+        var isLight =
+          stored === 'light' ||
+          (!stored && window.matchMedia('(prefers-color-scheme: light)').matches);
+        if (!isLight) document.documentElement.classList.add('dark');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

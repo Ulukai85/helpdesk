@@ -1,7 +1,8 @@
-import type { DashboardStats as DashboardStatsData } from '@helpdesk/core';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import RadialGauge from '@/components/RadialGauge';
+import { cn } from '@/lib/utils';
 
 function formatDuration(ms: number | null): string {
   if (ms === null) return '—';
@@ -12,25 +13,33 @@ function formatDuration(ms: number | null): string {
   return `${(hours / 24).toFixed(1)}d`;
 }
 
-type Stat = { label: string; value: string };
-
-function statsToTiles(stats: DashboardStatsData): Stat[] {
-  return [
-    { label: 'Total Tickets', value: stats.totalTickets.toLocaleString() },
-    { label: 'Open Tickets', value: stats.openTickets.toLocaleString() },
-    {
-      label: 'Resolved by AI',
-      value: stats.aiResolvedTickets.toLocaleString(),
-    },
-    {
-      label: 'AI Resolution Rate',
-      value: `${stats.aiResolvedPercentage.toFixed(1)}%`,
-    },
-    {
-      label: 'Avg. Resolution Time',
-      value: formatDuration(stats.averageResolutionTimeMs),
-    },
-  ];
+function StatTile({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <Card className='relative overflow-hidden'>
+      <div
+        className={cn(
+          'absolute inset-x-0 top-0 h-0.5',
+          accent ? 'bg-signal-teal' : 'bg-primary',
+        )}
+      />
+      <CardHeader>
+        <CardTitle className='text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+          {label}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className='font-mono text-3xl font-semibold'>{value}</p>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function DashboardStats() {
@@ -59,20 +68,40 @@ export default function DashboardStats() {
     );
   }
 
+  const aiPercentageLabel = `${data.aiResolvedPercentage.toFixed(1)}%`;
+
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5'>
-      {statsToTiles(data).map((tile) => (
-        <Card key={tile.label}>
-          <CardHeader>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>
-              {tile.label}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className='text-3xl font-bold'>{tile.value}</p>
-          </CardContent>
-        </Card>
-      ))}
+      <StatTile
+        label='Total Tickets'
+        value={data.totalTickets.toLocaleString()}
+      />
+      <StatTile label='Open Tickets' value={data.openTickets.toLocaleString()} />
+      <StatTile
+        label='Resolved by AI'
+        value={data.aiResolvedTickets.toLocaleString()}
+        accent
+      />
+      <Card className='relative overflow-hidden'>
+        <div className='absolute inset-x-0 top-0 h-0.5 bg-signal-teal' />
+        <CardHeader>
+          <CardTitle className='text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+            AI Resolution Rate
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className='relative flex w-fit items-center justify-center'>
+            <RadialGauge progress={data.aiResolvedPercentage} />
+            <span className='absolute font-mono text-xs font-semibold'>
+              {aiPercentageLabel}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+      <StatTile
+        label='Avg. Resolution Time'
+        value={formatDuration(data.averageResolutionTimeMs)}
+      />
     </div>
   );
 }
