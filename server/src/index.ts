@@ -68,6 +68,10 @@ app.use('/api/tickets', ticketsRouter);
 app.use('/api/agents', agentsRouter);
 app.use('/api/webhooks', webhooksRouter);
 
+app.get('/api/debug-sentry', () => {
+  throw new Error('Sentry server test');
+});
+
 if (process.env.NODE_ENV === 'production') {
   const clientDist = path.join(import.meta.dirname, '../../client/dist');
   app.use(express.static(clientDist));
