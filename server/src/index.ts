@@ -21,7 +21,20 @@ import webhooksRouter from './routes/webhooks';
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        connectSrc: ["'self'", 'https://*.sentry.io'],
+        // Allows the theme flash-prevention inline script in client/index.html.
+        scriptSrc: [
+          "'self'",
+          "'sha256-jg2HJgdkIw0+CT7bpt8MICgR/wOkH3GUBliim5/Qizg='",
+        ],
+      },
+    },
+  }),
+);
 
 app.use(
   cors({
