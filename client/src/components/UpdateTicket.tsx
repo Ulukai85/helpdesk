@@ -8,7 +8,7 @@ import {
   MANUAL_TICKET_STATUSES,
 } from '@helpdesk/core';
 import TicketSelectField from '@/components/TicketSelectField';
-import { CATEGORY_LABEL, STATUS_LABEL } from '@/components/ticketColumns';
+import { CATEGORY_LABEL, STATUS_LABEL } from '@/components/TicketColumns';
 
 const UNASSIGNED = 'unassigned';
 const NO_CATEGORY = 'none';
@@ -29,16 +29,20 @@ const CATEGORY_OPTIONS = [
 type Props = {
   ticket: TicketDetail;
   agents: Agent[] | undefined;
-}
+};
 
 export default function UpdateTicket({ ticket, agents }: Props) {
   const queryClient = useQueryClient();
 
   const { mutate: update, isPending: isUpdating } = useMutation({
     mutationFn: (patch: UpdateTicketData) =>
-      axios.patch(`/api/tickets/${ticket.id}`, patch, { withCredentials: true }),
+      axios.patch(`/api/tickets/${ticket.id}`, patch, {
+        withCredentials: true,
+      }),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['ticket', String(ticket.id)] }),
+      queryClient.invalidateQueries({
+        queryKey: ['ticket', String(ticket.id)],
+      }),
   });
 
   const agentOptions = [

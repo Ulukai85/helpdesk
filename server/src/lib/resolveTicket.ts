@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PgBoss } from 'pg-boss';
+import * as Sentry from '@sentry/node';
 import { generateText, Output } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
@@ -29,7 +30,10 @@ type Ticket = {
 };
 
 export const boss = new PgBoss({ connectionString: process.env.DATABASE_URL });
-boss.on('error', console.error);
+boss.on('error', (err) => {
+  console.error(err);
+  Sentry.captureException(err);
+});
 
 export async function startResolveTicketWorker(): Promise<void> {
   if (!process.env.OPENAI_API_KEY) return;
@@ -102,6 +106,7 @@ Ticket Message: ${body}`,
       }
     } catch (err) {
       console.error(`Failed to auto-resolve ticket ${id}:`, err);
+      Sentry.captureException(err);
       await prisma.ticket.update({
         where: { id },
         data: { status: TicketStatus.OPEN },

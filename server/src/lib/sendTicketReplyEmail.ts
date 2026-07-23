@@ -1,4 +1,5 @@
 import { PgBoss } from 'pg-boss';
+import * as Sentry from '@sentry/node';
 import sgMail from '@sendgrid/mail';
 
 const SEND_TICKET_REPLY_EMAIL_QUEUE = 'send-ticket-reply-email';
@@ -11,7 +12,10 @@ type TicketReplyEmail = {
 };
 
 export const boss = new PgBoss({ connectionString: process.env.DATABASE_URL });
-boss.on('error', console.error);
+boss.on('error', (err) => {
+  console.error(err);
+  Sentry.captureException(err);
+});
 
 export async function startSendTicketReplyEmailWorker(): Promise<void> {
   if (!process.env.SENDGRID_API_KEY) return;

@@ -12,7 +12,7 @@ import { type Ticket, TicketSortBy, DEFAULT_PAGE_SIZE } from '@helpdesk/core';
 import { Skeleton } from '@/components/ui/skeleton';
 import TicketFilters from '@/components/TicketFilters';
 import TicketPagination from '@/components/TicketPagination';
-import { ticketColumns } from '@/components/ticketColumns';
+import { ticketColumns } from '@/components/TicketColumns';
 import {
   Table,
   TableBody,
@@ -49,7 +49,10 @@ export default function TicketsTable() {
         '/api/tickets',
         {
           params: {
-            ...(sort && { sortBy: sort.id, sortOrder: sort.desc ? 'desc' : 'asc' }),
+            ...(sort && {
+              sortBy: sort.id,
+              sortOrder: sort.desc ? 'desc' : 'asc',
+            }),
             ...(status !== 'all' && { status }),
             ...(category !== 'all' && { category }),
             ...(search.trim() && { search: search.trim() }),
@@ -98,7 +101,10 @@ export default function TicketsTable() {
                       <button
                         className='flex items-center gap-1 hover:text-foreground'
                         onClick={header.column.getToggleSortingHandler()}>
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                         {header.column.getIsSorted() === 'asc' ? (
                           <ArrowUp className='h-3 w-3' />
                         ) : header.column.getIsSorted() === 'desc' ? (
@@ -108,7 +114,10 @@ export default function TicketsTable() {
                         )}
                       </button>
                     ) : (
-                      flexRender(header.column.columnDef.header, header.getContext())
+                      flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )
                     )}
                   </TableHead>
                 ))}
@@ -119,22 +128,36 @@ export default function TicketsTable() {
             {isPending ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell><Skeleton className='h-4 w-48' /></TableCell>
-                  <TableCell><Skeleton className='h-4 w-36' /></TableCell>
-                  <TableCell><Skeleton className='h-5 w-16 rounded-full' /></TableCell>
-                  <TableCell><Skeleton className='h-4 w-28' /></TableCell>
-                  <TableCell><Skeleton className='h-4 w-24' /></TableCell>
+                  <TableCell>
+                    <Skeleton className='h-4 w-48' />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className='h-4 w-36' />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className='h-5 w-16 rounded-full' />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className='h-4 w-28' />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className='h-4 w-24' />
+                  </TableCell>
                 </TableRow>
               ))
             ) : error ? (
               <TableRow>
-                <TableCell colSpan={ticketColumns.length} className='text-center text-destructive py-8'>
+                <TableCell
+                  colSpan={ticketColumns.length}
+                  className='text-center text-destructive py-8'>
                   {error.message}
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={ticketColumns.length} className='text-center text-muted-foreground py-8'>
+                <TableCell
+                  colSpan={ticketColumns.length}
+                  className='text-center text-muted-foreground py-8'>
                   No tickets found
                 </TableCell>
               </TableRow>
@@ -143,7 +166,10 @@ export default function TicketsTable() {
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -154,7 +180,11 @@ export default function TicketsTable() {
       </div>
 
       {!isPending && !error && totalPages > 1 && (
-        <TicketPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        <TicketPagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

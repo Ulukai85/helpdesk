@@ -1,4 +1,7 @@
+import './instrument';
+
 import express, { NextFunction, Request, Response } from 'express';
+import * as Sentry from '@sentry/node';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
@@ -64,6 +67,8 @@ app.use('/api/tickets', ticketsRouter);
 app.use('/api/agents', agentsRouter);
 app.use('/api/webhooks', webhooksRouter);
 
+Sentry.setupExpressErrorHandler(app);
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
@@ -75,18 +80,24 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
-startClassifyTicketWorker().catch((err) => {
+startClassifyTicketWorker().catch(async (err) => {
   console.error('Failed to start classify-ticket worker', err);
+  Sentry.captureException(err);
+  await Sentry.flush(2000);
   process.exit(1);
 });
 
-startResolveTicketWorker().catch((err) => {
+startResolveTicketWorker().catch(async (err) => {
   console.error('Failed to start resolve-ticket worker', err);
+  Sentry.captureException(err);
+  await Sentry.flush(2000);
   process.exit(1);
 });
 
-startSendTicketReplyEmailWorker().catch((err) => {
+startSendTicketReplyEmailWorker().catch(async (err) => {
   console.error('Failed to start send-ticket-reply-email worker', err);
+  Sentry.captureException(err);
+  await Sentry.flush(2000);
   process.exit(1);
 });
 

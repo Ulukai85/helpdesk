@@ -1,7 +1,11 @@
 import { useParams, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { type TicketDetail, type TicketReply, type Agent } from '@helpdesk/core';
+import {
+  type TicketDetail,
+  type TicketReply,
+  type Agent,
+} from '@helpdesk/core';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import ErrorMessage from '@/components/ErrorMessage';
